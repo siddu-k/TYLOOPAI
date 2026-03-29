@@ -1,118 +1,48 @@
 import { create } from 'zustand';
-import { supabase } from '../config/supabase';
+
+// Helper to load from localStorage
+const loadStorage = (key, defaultValue) => {
+    try {
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : defaultValue;
+    } catch (e) {
+        return defaultValue;
+    }
+};
+
+// Helper to save to localStorage
+const saveStorage = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+};
 
 const useAppStore = create((set, get) => ({
-    // ─── Auth ───
-    user: null,
-    profile: null,
-    isDoctor: false,
-    doctorProfile: null,
-    authLoading: true,
+    // ─── Profile & Settings ───
+    userName: loadStorage('tyloop_user_name', null),
+    selectedModel: loadStorage('tyloop_selected_model', 'qwen2.5-coder:7b'),
+    authLoading: false,
+    isProcessing: false,
+    isInterviewMode: false,
+    activeJobDescription: '',
+    interviewStarted: false,
 
-    setUser: (user) => set({ user }),
-    setProfile: (profile) => set({ profile }),
-    setAuthLoading: (loading) => set({ authLoading: loading }),
+    // ─── Model Management ───
+    localModels: [],
+    downloadingModel: null,
+    downloadProgress: 0,
+    downloadStatus: '',
 
-    initAuth: async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                set({ user: session.user });
-                await get().fetchProfile(session.user.id);
-                get().fetchLocation();
-            }
-        } catch (err) {
-            console.error('Auth init error:', err);
-        } finally {
-            set({ authLoading: false });
-        }
+    setLocalModels: (models) => set({ localModels: models }),
+    setDownloadingModel: (model) => set({ downloadingModel: model }),
+    setDownloadProgress: (progress) => set({ downloadProgress: progress }),
+    setDownloadStatus: (status) => set({ downloadStatus: status }),
 
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session?.user) {
-                set({ user: session.user });
-                await get().fetchProfile(session.user.id);
-                get().fetchLocation();
-            } else {
-                set({
-                    user: null,
-                    profile: null,
-                    isDoctor: false,
-                    doctorProfile: null,
-                    sessions: [],
-                    currentSession: null,
-                    messages: []
-                });
-            }
-        });
+    setUserName: (name) => {
+        set({ userName: name });
+        saveStorage('tyloop_user_name', name);
     },
-
-    fetchProfile: async (userId) => {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        // Try to fetch doctor profile if they are a doctor
-        const { data: doctor } = await supabase
-            .from('doctors')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle();
-
-        if (profile) {
-            set({
-                profile,
-                isDoctor: !!doctor,
-                doctorProfile: doctor || null
-            });
-        }
-    },
-
-    fetchLocation: async () => {
-        const user = get().user;
-        if (!user || !navigator.geolocation) return;
-
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            const currentProfile = get().profile;
-            const isDoc = get().isDoctor;
-
-            // Sync to DB if new or changed significantly (to save writes)
-            if (!currentProfile?.latitude || Math.abs(currentProfile.latitude - latitude) > 0.001) {
-                // Update profile
-                await supabase.from('profiles').update({ latitude, longitude }).eq('id', user.id);
-                set(state => ({ profile: { ...state.profile, latitude, longitude } }));
-
-                // Keep doctor table in sync
-                if (isDoc) {
-                    await supabase.from('doctors').update({ latitude, longitude }).eq('id', user.id);
-                    set(state => ({ doctorProfile: { ...state.doctorProfile, latitude, longitude } }));
-                }
-            }
-        }, (err) => {
-            console.warn('Geolocation denied or failed:', err.message);
-        });
-    },
-
-    signOut: async () => {
-        try {
-            await supabase.auth.signOut();
-        } catch (err) {
-            console.error('Supabase signout error:', err);
-        } finally {
-            // Force clear local state even if network fails
-            set({
-                user: null,
-                profile: null,
-                isDoctor: false,
-                doctorProfile: null,
-                sessions: [],
-                currentSession: null,
-                messages: [],
-                currentPage: 'dashboard'
-            });
-        }
+    setSelectedModel: (model) => {
+        set({ selectedModel: model });
+        saveStorage('tyloop_selected_model', model);
     },
 
     // ─── Navigation ───
@@ -120,106 +50,140 @@ const useAppStore = create((set, get) => ({
     setCurrentPage: (page) => set({ currentPage: page }),
 
     // ─── Chat Sessions ───
-    sessions: [],
+    sessions: loadStorage('tyloop_sessions', []),
     currentSession: null,
     messages: [],
     isAiTyping: false,
 
-    setSessions: (sessions) => set({ sessions }),
-    setCurrentSession: (session) => set({ currentSession: session }),
+    setSessions: (sessions) => {
+        set({ sessions });
+        saveStorage('tyloop_sessions', sessions);
+    },
+    setCurrentSession: (session) => {
+        if (!session) {
+            set({ currentSession: null, messages: [] });
+            return;
+        }
+        // Clear messages immediately to avoid bleeding before loading new ones
+        set({ currentSession: session, messages: [] });
+        get().loadSessionMessages(session.id);
+    },
     setMessages: (messages) => set({ messages }),
     setIsAiTyping: (typing) => set({ isAiTyping: typing }),
+    setIsProcessing: (processing) => set({ isProcessing: processing }),
+    setIsSpeaking: (speaking) => set({ isSpeaking: speaking }),
 
-    addMessage: (message) => set((state) => ({
-        messages: [...state.messages, message],
-    })),
+    startInterview: (description) => {
+        set({
+            isInterviewMode: true,
+            activeJobDescription: description,
+            currentPage: 'dashboard',
+            interviewStarted: true
+        });
+        get().createSession(`Interview: ${description.substring(0, 20)}...`);
+    },
+    exitInterview: () => {
+        set({
+            isInterviewMode: false,
+            activeJobDescription: '',
+            currentPage: 'dashboard',
+            interviewStarted: false
+        });
+        get().createSession('New Chat');
+    },
+    setInterviewStarted: (started) => set({ interviewStarted: started }),
+
+    addMessage: (message) => {
+        const newMessages = [...get().messages, message];
+        set({ messages: newMessages });
+
+        // Save to localStorage for this session
+        const sessionId = get().currentSession?.id;
+        if (sessionId) {
+            saveStorage(`tyloop_messages_${sessionId}`, newMessages);
+        }
+    },
 
     updateLastMessage: (content) => set((state) => {
         const msgs = [...state.messages];
         if (msgs.length > 0 && msgs[msgs.length - 1].role === 'assistant') {
             msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content };
         }
+
+        // Save to localStorage
+        const sessionId = state.currentSession?.id;
+        if (sessionId) {
+            saveStorage(`tyloop_messages_${sessionId}`, msgs);
+        }
+
         return { messages: msgs };
     }),
 
-    fetchSessions: async () => {
-        const user = get().user;
-        if (!user) return;
-        const { data } = await supabase
-            .from('chat_sessions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (data && data.length > 0) {
-            set({ sessions: data });
-            // If no session is selected, select the first one and load its messages
+    fetchSessions: () => {
+        const sessions = loadStorage('tyloop_sessions', []);
+        set({ sessions });
+        if (sessions.length > 0) {
             if (!get().currentSession) {
-                const latest = data[0];
+                const latest = sessions[0];
                 set({ currentSession: latest });
                 get().loadSessionMessages(latest.id);
             }
+        } else {
+            set({ currentSession: null, messages: [] });
         }
     },
 
-    createSession: async () => {
-        const user = get().user;
-        if (!user) return null;
-        const { data, error } = await supabase
-            .from('chat_sessions')
-            .insert({ user_id: user.id, title: 'New Consultation' })
-            .select()
-            .single();
-        if (data) {
-            set((state) => ({
-                sessions: [data, ...state.sessions],
-                currentSession: data,
-                messages: [],
-            }));
-            return data;
-        }
-        return null;
+    createSession: () => {
+        const newSession = {
+            id: crypto.randomUUID(),
+            user_id: 'guest',
+            title: 'New Chat',
+            created_at: new Date().toISOString()
+        };
+
+        const sessions = [newSession, ...get().sessions];
+        set({
+            sessions,
+            currentSession: newSession,
+            messages: []
+        });
+        saveStorage('tyloop_sessions', sessions);
+        return newSession;
     },
 
-    loadSessionMessages: async (sessionId) => {
-        const { data } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-        if (data) set({ messages: data });
+    loadSessionMessages: (sessionId) => {
+        const messages = loadStorage(`tyloop_messages_${sessionId}`, []);
+        set({ messages });
     },
 
-    saveMessage: async (sessionId, role, content, imageUrl = null) => {
-        const { data } = await supabase
-            .from('chat_messages')
-            .insert({ session_id: sessionId, role, content, image_url: imageUrl })
-            .select()
-            .single();
-        return data;
+    saveMessage: (sessionId, role, content, imageUrl = null) => {
+        const newMessage = {
+            id: crypto.randomUUID(),
+            session_id: sessionId,
+            role,
+            content,
+            image_url: imageUrl,
+            created_at: new Date().toISOString()
+        };
+        get().addMessage(newMessage);
+        return newMessage;
     },
 
-    deleteSession: async (sessionId) => {
-        const { error } = await supabase
-            .from('chat_sessions')
-            .delete()
-            .eq('id', sessionId);
+    deleteSession: (sessionId) => {
+        const newSessions = get().sessions.filter(s => s.id !== sessionId);
+        const isCurrent = get().currentSession?.id === sessionId;
 
-        if (!error) {
-            set((state) => {
-                const newSessions = state.sessions.filter(s => s.id !== sessionId);
-                const isCurrent = state.currentSession?.id === sessionId;
-                return {
-                    sessions: newSessions,
-                    currentSession: isCurrent ? (newSessions[0] || null) : state.currentSession,
-                    messages: isCurrent ? [] : state.messages
-                };
-            });
-            // If we deleted the current session and there's a new "first" session, load its messages
-            const current = get().currentSession;
-            if (current) {
-                get().loadSessionMessages(current.id);
-            }
+        set({
+            sessions: newSessions,
+            currentSession: isCurrent ? (newSessions[0] || null) : get().currentSession,
+            messages: isCurrent ? [] : get().messages
+        });
+
+        saveStorage('tyloop_sessions', newSessions);
+        localStorage.removeItem(`tyloop_messages_${sessionId}`);
+
+        if (isCurrent && newSessions[0]) {
+            get().loadSessionMessages(newSessions[0].id);
         }
     },
 
@@ -232,6 +196,20 @@ const useAppStore = create((set, get) => ({
     // ─── Sidebar ───
     sidebarOpen: true,
     toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+
+    // Mocks for compatibility
+    initAuth: () => set({ authLoading: false }),
+    signOut: () => {
+        localStorage.clear();
+        set({
+            userName: null,
+            selectedModel: 'qwen2.5-coder:7b',
+            sessions: [],
+            currentSession: null,
+            messages: [],
+            currentPage: 'dashboard'
+        });
+    }
 }));
 
 export default useAppStore;

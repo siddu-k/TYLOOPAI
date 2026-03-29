@@ -1,37 +1,23 @@
-import { useEffect } from 'react';
-import useAppStore from './stores/appStore';
-import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import DoctorDashboard from './pages/DoctorDashboard';
-import ProfilePage from './pages/ProfilePage';
+import OnboardingPage from './pages/OnboardingPage';
+import SettingsPage from './pages/SettingsPage';
+import DoubtPage from './pages/DoubtPage';
+import useAppStore from './stores/appStore';
 
 export default function App() {
-    const { user, isDoctor, authLoading, initAuth, currentPage } = useAppStore();
+    const { currentPage, userName } = useAppStore();
 
-    useEffect(() => {
-        initAuth();
-    }, []);
-
-    if (authLoading) {
-        return (
-            <div className="h-full w-full flex items-center justify-center bg-background">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-muted-foreground text-sm">Loading Dhanvantari AI...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!user) {
-        return <LoginPage />;
+    if (!userName) {
+        return <OnboardingPage />;
     }
 
     switch (currentPage) {
-        case 'profile':
-            return <ProfilePage />;
+        case 'settings':
+            return <SettingsPage />;
+        case 'doubt':
+            return <DoubtPage />;
         case 'dashboard':
         default:
-            return isDoctor ? <DoctorDashboard /> : <DashboardPage />;
+            return <DashboardPage />;
     }
 }

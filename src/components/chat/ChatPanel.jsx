@@ -3,16 +3,17 @@ import useAppStore from '../../stores/appStore';
 import ChatMessage from './ChatMessage';
 import ImageUpload from './ImageUpload';
 import VoiceControls from '../voice/VoiceControls';
-import MedicalSummary from '../medical/MedicalSummary';
 import { streamChat, fileToBase64 } from '../../services/ollamaService';
 import { speak, stopSpeaking, enqueueSpeech, startListening as startSTT, stopListening as stopSTT, isSTTSupported } from '../../services/voiceService';
 
 export default function ChatPanel() {
     const {
         messages, addMessage, updateLastMessage,
-        currentSession, isAiTyping, setIsAiTyping,
+        sessions, currentSession, isAiTyping, setIsAiTyping,
         saveMessage, toggleSidebar, setIsSpeaking,
-        isSpeaking, isListening, setIsListening
+        isSpeaking, isListening, setIsListening,
+        selectedModel, userName, isInterviewMode,
+        interviewStarted, setInterviewStarted
     } = useAppStore();
 
     const [input, setInput] = useState('');
@@ -27,10 +28,37 @@ export default function ChatPanel() {
     const messagesEndRef = useRef(null);
     const abortRef = useRef(null);
     const inputRef = useRef(null);
+    const isProcessingRef = useRef(false); // keep local ref for sub-tick protection
+    const currentRequestIdRef = useRef(0);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // Auto-enable Voice Call for Interview Mode
+    useEffect(() => {
+        if (isInterviewMode && interviewStarted) {
+            setIsCallMode(true);
+        }
+    }, [isInterviewMode, interviewStarted]);
+
+    // Cleanup state when session changes
+    useEffect(() => {
+        setInput('');
+        setAttachedImage(null);
+        setImagePreview(null);
+        if (abortRef.current) {
+            abortRef.current.abort();
+        }
+    }, [currentSession?.id]);
+
+    // Auto-start Interview Trigger
+    useEffect(() => {
+        if (isInterviewMode && interviewStarted && messages.length === 0 && !isAiTyping) {
+            handleSend("Let's begin the interview. Please introduce yourself and ask the first question.");
+            setInterviewStarted(false);
+        }
+    }, [isInterviewMode, interviewStarted, messages.length, isAiTyping]);
 
     // Real-time Voice-to-Voice Loop
     useEffect(() => {
@@ -44,12 +72,13 @@ export default function ChatPanel() {
 
         // Auto-start Mic when AI is done processing and speaking
         if (!isAiTyping && !isSpeaking && !isListening) {
+            // Adaptive Delay: 2.5s for dynamic interviews, 700ms for quick chat
+            const thinkingDelay = isInterviewMode ? 2500 : 700;
+
             const timer = setTimeout(() => {
                 setIsListening(true);
                 startSTT(
                     (text, isFinal) => {
-                        // Just update the UI text preview as the user speaks.
-                        // We will actually send the message in the onEnd callback below.
                         setInput(text);
                     },
                     (finalText) => {
@@ -64,16 +93,15 @@ export default function ChatPanel() {
                     (err) => {
                         setIsListening(false);
                         if (isCallMode) {
-                            // Only drop the call if the user explicitly denied microphone permissions
                             if (err === 'not-allowed') {
                                 setIsCallMode(false);
                             } else {
-                                setTriggerRestart(p => !p); // Auto-recover from timeouts, aborts, etc.
+                                setTriggerRestart(p => !p); // Auto-recover
                             }
                         }
                     }
                 );
-            }, 600); // Wait slightly after speaking to avoid feedback
+            }, thinkingDelay);
 
             return () => {
                 clearTimeout(timer);
@@ -81,87 +109,98 @@ export default function ChatPanel() {
                 setIsListening(false);
             };
         }
-    }, [isCallMode, isAiTyping, isSpeaking, triggerRestart]);
+    }, [isCallMode, isAiTyping, isSpeaking, triggerRestart, isInterviewMode]);
 
     const handleSend = async (text = input) => {
-        const trimmed = text.trim();
+        const store = useAppStore.getState();
+        if (store.isProcessing) return;
+        const trimmed = typeof text === 'string' ? text.trim() : '';
         if (!trimmed && !attachedImage) return;
         if (!currentSession) return;
 
-        // Clear input
+        store.setIsProcessing(true);
+
+        // Clear input state immediately
         setInput('');
         const currentImage = attachedImage;
         const currentPreview = imagePreview;
         setAttachedImage(null);
         setImagePreview(null);
 
-        // Add user message
-        const userMsg = { role: 'user', content: trimmed, image_url: currentPreview };
-        addMessage(userMsg);
-        await saveMessage(currentSession.id, 'user', trimmed, currentPreview);
-
-        // Prepare messages for Ollama
-        const chatHistory = [...messages, userMsg].map((m) => ({
-            role: m.role,
-            content: m.content,
-        }));
-
-        // Add image if attached
-        let images = [];
-        if (currentImage) {
-            try {
-                const base64 = await fileToBase64(currentImage);
-                images = [base64];
-                chatHistory[chatHistory.length - 1].images = images;
-            } catch (e) {
-                console.error('Image encoding error:', e);
-            }
-        }
-
-        // Add placeholder AI message
-        addMessage({ role: 'assistant', content: '' });
-        setIsAiTyping(true);
-
         try {
+            // 1. Save and add User message (saveMessage internally calls addMessage)
+            const userMsg = await saveMessage(currentSession.id, 'user', trimmed, currentPreview);
+
+            // 2. Prepare history for Ollama
+            const chatHistory = messages.map(m => ({ role: m.role, content: m.content }));
+            chatHistory.push({ role: 'user', content: trimmed });
+
+            if (currentImage) {
+                try {
+                    const base64 = await fileToBase64(currentImage);
+                    chatHistory[chatHistory.length - 1].images = [base64];
+                } catch (e) {
+                    console.error('Image encoding error:', e);
+                }
+            }
+
+            // 3. Add placeholder assistant message with metadata
+            setIsAiTyping(true);
+            addMessage({
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content: '',
+                created_at: new Date().toISOString()
+            });
+
+            const requestId = ++currentRequestIdRef.current;
+            if (abortRef.current) abortRef.current.abort();
             abortRef.current = new AbortController();
 
-            // Initial clear queue and trigger speaking indicator
+            // Critical: clear queue and start speaking indicator
             speak('', () => setIsSpeaking(true), () => setIsSpeaking(false));
 
             let spokenLength = 0;
             const fullResponse = await streamChat(
                 chatHistory,
                 (partial) => {
+                    if (requestId !== currentRequestIdRef.current) return;
                     updateLastMessage(partial);
 
-                    // Streaming TTS implementation
-                    const newText = partial.substring(spokenLength);
-                    // Find sentence boundaries: punctuation followed by space or newline
-                    const sentenceEndMatch = newText.match(/([.?!]|\n)\s+/);
-                    if (sentenceEndMatch) {
-                        const idx = newText.indexOf(sentenceEndMatch[0]) + sentenceEndMatch[0].length;
-                        const sentenceToSpeak = newText.substring(0, idx);
-                        enqueueSpeech(sentenceToSpeak);
-                        spokenLength += sentenceToSpeak.length;
+                    // Improved Sentence Splitting Logic
+                    let workingText = partial.substring(spokenLength);
+                    const sentenceRegex = /[^.?!]+[.?!](?:\s+|$)/g;
+                    let match;
+
+                    while ((match = sentenceRegex.exec(workingText)) !== null) {
+                        const sentence = match[0];
+                        if (sentence.trim()) {
+                            enqueueSpeech(sentence);
+                            spokenLength += (match.index + sentence.length);
+                            // Adjust workingText for the next possible match in SAME chunk
+                            workingText = partial.substring(spokenLength);
+                            sentenceRegex.lastIndex = 0;
+                        }
                     }
                 },
-                abortRef.current.signal
+                abortRef.current.signal,
+                selectedModel,
+                { isInterviewMode: store.isInterviewMode, jobDescription: store.activeJobDescription }
             );
 
-            // Save complete response
-            await saveMessage(currentSession.id, 'assistant', fullResponse);
-
-            // Speak any remaining text at the end
-            const remainingText = fullResponse.substring(spokenLength);
-            if (remainingText.trim()) {
-                enqueueSpeech(remainingText);
+            if (requestId === currentRequestIdRef.current) {
+                const remainingText = fullResponse.substring(spokenLength);
+                if (remainingText.trim()) {
+                    enqueueSpeech(remainingText);
+                }
             }
         } catch (err) {
             if (err.name !== 'AbortError') {
-                updateLastMessage('⚠️ Failed to connect to Dhanvantari AI. Make sure Ollama is running with `qwen3-vl:4b` model.\n\nError: ' + err.message);
+                updateLastMessage(`⚠️ Connection Error: ${err.message}`);
             }
         } finally {
             setIsAiTyping(false);
+            useAppStore.getState().setIsProcessing(false);
             abortRef.current = null;
         }
     };
@@ -182,86 +221,74 @@ export default function ChatPanel() {
 
     const handleVoiceResult = (transcript) => {
         if (transcript) {
-            handleSend(transcript);
+            setInput(transcript);
+            // Focus and adjust height
+            if (inputRef.current) {
+                inputRef.current.focus();
+                // Manually trigger height adjustment
+                setTimeout(() => {
+                    inputRef.current.style.height = 'auto';
+                    inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 150) + 'px';
+                }, 0);
+            }
         }
     };
 
     const handleStopGeneration = () => {
-        if (abortRef.current) {
-            abortRef.current.abort();
-        }
+        if (abortRef.current) abortRef.current.abort();
         stopSpeaking();
     };
 
     return (
-        <div className="flex flex-col h-full">
-            {/* Header */}
-            <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card/50 backdrop-blur-sm">
-                <button
-                    onClick={toggleSidebar}
-                    className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
-                </button>
-                <div className="flex-1">
-                    <h1 className="text-sm font-semibold text-foreground">
-                        {currentSession?.title || 'Consultation'}
-                    </h1>
-                    <p className="text-xs text-muted-foreground">AI-Assisted Healthcare Consultation</p>
-                </div>
-
-                {isSTTSupported() && (
-                    <button
-                        onClick={() => setIsCallMode(!isCallMode)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${isCallMode ? 'bg-destructive/20 text-destructive hover:bg-destructive/30 pulse-ring' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                        title={isCallMode ? "End Voice Call" : "Start Hands-free Voice Call"}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            {isCallMode ? <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91" /> : <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />}
-                        </svg>
-                        {isCallMode ? 'End Call' : 'Start Call'}
+        <div className={`flex flex-col h-full bg-transparent ${isInterviewMode ? 'border-none' : ''}`}>
+            {/* Header - Hide in Interview Mode */}
+            {!isInterviewMode && (
+                <header className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-sm">
+                    <button onClick={toggleSidebar} className="lg:hidden p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
                     </button>
-                )}
+                    <div className="flex-1">
+                        <h1 className="text-sm font-semibold text-zinc-50">{currentSession?.title || 'New Chat'}</h1>
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{selectedModel}</p>
+                    </div>
+                    {isSTTSupported() && (
+                        <button
+                            onClick={() => setIsCallMode(!isCallMode)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${isCallMode ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-50'}`}
+                        >
+                            {isCallMode ? 'End Call' : 'Voice Call'}
+                        </button>
+                    )}
+                </header>
+            )}
 
-                <button
-                    onClick={() => setShowSummary(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-muted/80 text-muted-foreground rounded-lg transition-colors"
-                    title="End session &amp; generate summary"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-                    Summary
-                </button>
-            </header>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800">
                 {messages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                        <div className="w-16 h-16 rounded-2xl bg-zinc-900 flex items-center justify-center mb-6 border border-zinc-800">
-                            <div className="w-6 h-6 rounded-full border border-zinc-500 flex items-center justify-center">
-                                <div className="w-3 h-3 bg-zinc-50 rounded-full" />
-                            </div>
+                    <div className="flex flex-col items-center justify-center h-full text-center py-12 px-6 max-w-md mx-auto">
+                        <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 mb-6 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
                         </div>
-                        <h2 className="text-xl font-semibold text-zinc-50 mb-2">Hello! I'm Dhanvantari AI</h2>
-                        <p className="text-zinc-500 text-sm max-w-sm mx-auto leading-relaxed">
-                            Describe your symptoms or upload medical images for AI triage assistance.
+                        <h2 className={`${isInterviewMode ? 'text-sm' : 'text-xl'} font-bold text-zinc-50 mb-2`}>
+                            {isInterviewMode ? 'Connecting with Recruiter...' : `Welcome, ${userName || 'Friend'}`}
+                        </h2>
+                        <p className="text-zinc-500 text-xs leading-relaxed mb-10">
+                            {isInterviewMode ? 'The AI is preparing your first interview question.' : 'How can I help you learn or build today?'}
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-10 max-w-md w-full">
-                            {[
-                                { text: 'I have a headache' },
-                                { text: 'Skin rash analysis' },
-                                { text: 'Medical medicine info' },
-                                { text: 'See a specialist?' },
-                            ].map((suggestion, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => handleSend(suggestion.text)}
-                                    className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-[13px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-all text-center"
-                                >
-                                    {suggestion.text}
-                                </button>
-                            ))}
-                        </div>
+
+                        {!isInterviewMode && (
+                            <div className="grid grid-cols-1 gap-2 w-full">
+                                {[
+                                    'Mock interview: React Developer',
+                                    'Explain neural networks simply',
+                                    'Python script to scrape data',
+                                    'Quiz me on modern history'
+                                ].map((text, i) => (
+                                    <button key={i} onClick={() => handleSend(text)} className="px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-50 transition-all text-left">
+                                        {text}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -271,73 +298,48 @@ export default function ChatPanel() {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Image preview */}
             {imagePreview && (
-                <div className="px-4 pb-2 animate-fade-in">
-                    <div className="inline-flex items-center gap-2 bg-muted border border-border rounded-lg p-2">
-                        <img src={imagePreview} alt="Attached" className="w-16 h-16 object-cover rounded-md" />
-                        <button
-                            onClick={() => { setAttachedImage(null); setImagePreview(null); }}
-                            className="p-1 hover:bg-background rounded-md transition-colors"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                <div className="px-4 pb-2">
+                    <div className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-2">
+                        <img src={imagePreview} alt="Preview" className="w-12 h-12 object-cover rounded-lg" />
+                        <button onClick={() => { setAttachedImage(null); setImagePreview(null); }} className="p-1 hover:text-rose-500 text-zinc-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Input bar */}
-            <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm">
-                <div className="flex items-end gap-2 max-w-4xl mx-auto">
+            <div className="p-4 border-t border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
+                <div className="flex items-end gap-3 max-w-4xl mx-auto">
                     <ImageUpload onImageSelect={handleImageSelect} />
-
                     <div className="flex-1 relative">
                         <textarea
                             ref={inputRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Describe your symptoms or ask a health question..."
+                            placeholder="Message Tyloop..."
                             rows={1}
-                            className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-all resize-none text-[13px] leading-relaxed"
-                            style={{ minHeight: '40px', maxHeight: '120px' }}
+                            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-all resize-none text-sm leading-relaxed"
+                            style={{ minHeight: '44px', maxHeight: '150px' }}
                             onInput={(e) => {
                                 e.target.style.height = 'auto';
-                                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                                e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
                             }}
                         />
                     </div>
-
                     <VoiceControls onResult={handleVoiceResult} />
-
                     {isAiTyping ? (
-                        <button
-                            onClick={handleStopGeneration}
-                            className="p-2.5 bg-rose-600/10 text-rose-500 rounded-md hover:bg-rose-600/20 transition-colors flex-shrink-0 border border-rose-600/20"
-                            title="Stop generation"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+                        <button onClick={handleStopGeneration} className="p-3 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition-all border border-rose-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
                         </button>
                     ) : (
-                        <button
-                            onClick={() => handleSend()}
-                            disabled={!input.trim() && !attachedImage}
-                            className="p-2.5 bg-white text-black rounded-md hover:bg-zinc-200 transition-colors disabled:opacity-10 disabled:grayscale flex-shrink-0"
-                            title="Send message"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                        <button onClick={() => handleSend()} disabled={!input.trim() && !attachedImage} className="p-3 bg-white text-black rounded-xl hover:bg-zinc-200 transition-all disabled:opacity-20 flex-shrink-0 shadow-lg shadow-white/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                         </button>
                     )}
                 </div>
-                <p className="text-center text-xs text-muted-foreground/60 mt-2">
-                    Dhanvantari AI provides educational health information, not medical diagnoses.
-                </p>
             </div>
-
-            {/* Medical Summary Modal */}
-            {showSummary && (
-                <MedicalSummary onClose={() => setShowSummary(false)} />
-            )}
         </div>
     );
 }

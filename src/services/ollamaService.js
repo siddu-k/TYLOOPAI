@@ -1,25 +1,43 @@
 const OLLAMA_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
 
-const SYSTEM_PROMPT = `You are Dr. Dhanvantari, a highly experienced, caring, real human doctor on the Dhanvantari AI platform. 
+const SYSTEM_PROMPT = `You are Tyloop, a versatile and intelligent multipurpose AI assistant. 
+
+Your goal is to help users with a wide range of tasks, including:
+- Preparing for interviews (mock interviews, feedback).
+- Creating and conducting quizzes on any topic.
+- Facilitating learning by explaining complex concepts simply.
+- General productivity and creative assistance.
 
 CRITICAL RULES:
-- YOUR RESPONSES ARE SPOKEN OUT LOUD BY A REAL-TIME TEXT-TO-SPEECH ENGINE.
-- Speak exactly like a real human naturally speaking out loud to a patient on a voice call.
-- NEVER use parentheses, asterisks, emojis, abstractions or long bulleted lists.
-- Be highly concise. Provide only 1 to 3 short sentences.
-- NEVER write essays or chatbot overviews.
-- Identify the problem directly and state what to do. Provide the quickest possible response.
-- DOCTOR MATCHING: You DO have access to doctors! If a patient asks to book an appointment or needs a specialist, tell them to click the "End Session & Generate Summary" button on their screen. The system will automatically match them with our available doctors for 1-click booking based on your category recommendation.`;
+1. Speak naturally and helpfuly, like a knowledgeable friend or mentor.
+2. Be concise but thorough when explaining concepts.
+3. For interviews: Act as a professional interviewer, ask one question at a time, and provide constructive feedback.
+4. For quizzes: Present questions clearly, wait for the user's answer, and then provide the correct explanation.
+5. NEVER mention being a doctor or a healthcare assistant. You are Tyloop.`;
 
 /**
  * Send a message to Ollama and stream the response
- * @param {Array} messages - Chat history [{role, content, images?}]
- * @param {Function} onToken - Callback for each streamed token
- * @param {AbortSignal} signal - AbortController signal
  */
-export async function streamChat(messages, onToken, signal) {
+export async function streamChat(messages, onToken, signal, model = null, interviewData = null) {
+    let systemPrompt = SYSTEM_PROMPT;
+
+    if (interviewData?.isInterviewMode) {
+        systemPrompt = `You are Tyloop, a world-class professional Lead Interviewer at Tyloop AI.
+        CONTEXT: You are interviewing a candidate for the following role/description: ${interviewData.jobDescription}
+        
+        DIRECTIONS:
+        1. Identify yourself as "Tyloop, Lead Recruiter at Tyloop AI".
+        2. Conduct a realistic, high-pressure yet professional interview.
+        3. CRITICAL: NEVER use placeholders like "[Your Name]", "[Company Name]", or brackets of any kind. 
+        4. If a company name is not in the description, you represent "Tyloop AI". 
+        5. Ask exactly ONE question at a time.
+        6. Do not break character. Wait for the candidate's response.
+        7. In your first message, introduce yourself professionally as Tyloop and ask the first opening question.
+        8. Use a sophisticated, corporate tone.`;
+    }
+
     const ollamaMessages = [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         ...messages.map((msg) => {
             const ollamaMsg = { role: msg.role, content: msg.content };
             if (msg.images && msg.images.length > 0) {
@@ -29,9 +47,12 @@ export async function streamChat(messages, onToken, signal) {
         }),
     ];
 
-    // Choose model based on whether any message has an image attachment
-    const hasImage = messages.some(msg => msg.images && msg.images.length > 0);
-    const selectedModel = hasImage ? 'qwen3-vl:4b' : 'qwen2.5-coder:7b';
+    // Use requested model or fallback to image-capable one if needed
+    let selectedModel = model;
+    if (!selectedModel) {
+        const hasImage = messages.some(msg => msg.images && msg.images.length > 0);
+        selectedModel = hasImage ? 'qwen3-vl:4b' : 'qwen2.5-coder:7b';
+    }
 
     const response = await fetch(`${OLLAMA_URL}/api/chat`, {
         method: 'POST',
@@ -60,7 +81,7 @@ export async function streamChat(messages, onToken, signal) {
         const chunk = decoder.decode(value, { stream: true });
         lineBuffer += chunk;
         const lines = lineBuffer.split('\n');
-        lineBuffer = lines.pop(); // Keep the last partial line in the buffer
+        lineBuffer = lines.pop();
 
         for (const line of lines) {
             if (!line.trim()) continue;
@@ -80,54 +101,81 @@ export async function streamChat(messages, onToken, signal) {
 }
 
 /**
- * Generate a medical summary from chat history
+ * Generate a summary of the conversation
  */
 export async function generateSummary(messages) {
-    const summaryPrompt = `Based on the following consultation conversation, generate a structured medical summary in JSON format with these fields:
-- "chief_complaint": Main reason for consultation
-- "symptoms": Array of reported symptoms
-- "observations": Array of observations (including from images if any)
-- "possible_conditions": Array of possible conditions (educational, not diagnostic) 
-- "severity": "low" | "moderate" | "high" | "critical"
-- "recommendations": Array of recommended next steps
-- "should_escalate": boolean - true if patient should see a doctor soon
-- "specialist_type": Suggested specialist if applicable
+    const summaryPrompt = `Based on the following conversation, generate a short, descriptive title for this chat session.
+Respond ONLY with the title string, no quotes or extra text.
 
 CONVERSATION:
-${messages.map((m) => `${m.role}: ${m.content}`).join('\n')}
-
-Respond ONLY with valid JSON, no markdown or explanation.`;
-
-    const hasImage = messages.some(msg => msg.images && msg.images.length > 0);
-    const selectedModel = hasImage ? 'qwen3-vl:4b' : 'qwen2.5-coder:7b';
+${messages.slice(0, 5).map((m) => `${m.role}: ${m.content}`).join('\n')}
+`;
 
     const response = await fetch(`${OLLAMA_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            model: selectedModel,
+            model: 'qwen2.5-coder:7b',
             messages: [{ role: 'user', content: summaryPrompt }],
             stream: false,
         }),
     });
 
     const data = await response.json();
-    try {
-        const content = data.message?.content || '';
-        // Try to extract JSON from the response
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-    } catch (e) {
-        console.error('Failed to parse summary:', e);
-    }
-    return null;
+    return data.message?.content?.trim() || 'New Chat';
 }
 
 /**
- * Convert a File to base64 string (without data URL prefix)
+ * List locally downloaded models
  */
+export async function listLocalModels() {
+    try {
+        const response = await fetch(`${OLLAMA_URL}/api/tags`);
+        if (!response.ok) throw new Error('Failed to fetch models');
+        const data = await response.json();
+        return data.models || [];
+    } catch (e) {
+        console.error('List models error:', e);
+        return [];
+    }
+}
+
+/**
+ * Pull (download) a new model from Ollama
+ */
+export async function pullModel(modelName, onProgress) {
+    const response = await fetch(`${OLLAMA_URL}/api/pull`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: modelName, stream: true }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to pull model: ${response.status} ${response.statusText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+                const json = JSON.parse(line);
+                if (onProgress) onProgress(json);
+            } catch (e) {
+                console.warn('Malformed JSON chunk in pull:', line);
+            }
+        }
+    }
+}
+
 export function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();

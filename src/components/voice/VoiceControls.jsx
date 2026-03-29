@@ -45,8 +45,8 @@ export default function VoiceControls({ onResult }) {
         <button
             onClick={handleToggle}
             className={`relative p-2.5 rounded-xl transition-all flex-shrink-0 ${isListening
-                ? 'bg-destructive text-destructive-foreground pulse-ring'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                ? 'bg-rose-500/10 text-rose-500 pulse-ring border border-rose-500/20'
+                : 'text-zinc-500 hover:text-zinc-50 hover:bg-zinc-800'
                 }`}
             title={isListening ? 'Stop listening' : 'Start voice input'}
         >
