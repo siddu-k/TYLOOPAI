@@ -4,7 +4,10 @@ import { Lipsync } from 'wawa-lipsync';
  * Lip Sync Service — manages wawa-lipsync instance and audio connections
  */
 
-export const lipsyncManager = new Lipsync({});
+export const lipsyncManager = new Lipsync({
+    fftSize: 1024,
+    historySize: 6,
+});
 
 let animationFrameId = null;
 let audioContext = null;

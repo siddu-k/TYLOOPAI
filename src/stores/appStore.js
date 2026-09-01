@@ -24,6 +24,21 @@ const useAppStore = create((set, get) => ({
     isInterviewMode: false,
     activeJobDescription: '',
     interviewStarted: false,
+    isVisualizeMode: false,
+    activeConcept: '',
+    activeBoardDiagram: '',
+    activeBoardTitle: '',
+    isAvatarEnabled: loadStorage('tyloop_avatar_enabled', true),
+
+    setIsAvatarEnabled: (val) => {
+        set({ isAvatarEnabled: val });
+        saveStorage('tyloop_avatar_enabled', val);
+    },
+    toggleAvatarEnabled: () => {
+        const next = !get().isAvatarEnabled;
+        set({ isAvatarEnabled: next });
+        saveStorage('tyloop_avatar_enabled', next);
+    },
 
     // ─── Model Management ───
     localModels: [],
@@ -43,6 +58,66 @@ const useAppStore = create((set, get) => ({
     setSelectedModel: (model) => {
         set({ selectedModel: model });
         saveStorage('tyloop_selected_model', model);
+    },
+
+    // ─── 3D Avatar Customization ───
+    avatarCustomization: loadStorage('tyloop_avatar_customization', {
+        hairColor: '#2b231d',      // Dark Chestnut Brown
+        skinTone: '#e3ad82',       // Warm Natural Skin
+        eyeColor: '#2e7d32',       // Emerald Hazel
+        outfitColor: '#18181b',    // Charcoal / Suit
+        bottomColor: '#1e293b',    // Navy Slate
+        lightingMood: 'clinical',  // clinical | cyberpunk | warm | studio
+    }),
+
+    setAvatarCustomization: (updates) => {
+        set((state) => {
+            const next = { ...state.avatarCustomization, ...updates };
+            saveStorage('tyloop_avatar_customization', next);
+            return { avatarCustomization: next };
+        });
+    },
+
+    resetAvatarCustomization: () => {
+        const defaultCustom = {
+            hairColor: '#2b231d',
+            skinTone: '#e3ad82',
+            eyeColor: '#2e7d32',
+            outfitColor: '#18181b',
+            bottomColor: '#1e293b',
+            lightingMood: 'clinical',
+        };
+        set({ avatarCustomization: defaultCustom });
+        saveStorage('tyloop_avatar_customization', defaultCustom);
+    },
+
+    // ─── Voice & Tone Settings ───
+    voiceSettings: loadStorage('tyloop_voice_settings', {
+        pitch: 1.0,      // 0.5 (Deep Bass) to 1.8 (High/Bright)
+        rate: 1.05,      // 0.7x to 1.6x
+        volume: 1.0,     // 0.0 to 1.0
+        bassBoost: 0,    // -5dB to +12dB
+        voiceURI: '',    // Preferred System Voice URI
+    }),
+
+    setVoiceSettings: (updates) => {
+        set((state) => {
+            const next = { ...state.voiceSettings, ...updates };
+            saveStorage('tyloop_voice_settings', next);
+            return { voiceSettings: next };
+        });
+    },
+
+    resetVoiceSettings: () => {
+        const defaultVoice = {
+            pitch: 1.0,
+            rate: 1.05,
+            volume: 1.0,
+            bassBoost: 0,
+            voiceURI: '',
+        };
+        set({ voiceSettings: defaultVoice });
+        saveStorage('tyloop_voice_settings', defaultVoice);
     },
 
     // ─── Navigation ───
@@ -76,6 +151,7 @@ const useAppStore = create((set, get) => ({
     startInterview: (description) => {
         set({
             isInterviewMode: true,
+            isVisualizeMode: false,
             activeJobDescription: description,
             currentPage: 'dashboard',
             interviewStarted: true
@@ -89,9 +165,79 @@ const useAppStore = create((set, get) => ({
             currentPage: 'dashboard',
             interviewStarted: false
         });
-        get().createSession('New Chat');
     },
     setInterviewStarted: (started) => set({ interviewStarted: started }),
+
+    startVisualizeMode: (concept = '') => {
+        set({
+            isVisualizeMode: true,
+            isInterviewMode: false,
+            activeConcept: concept,
+            activeBoardDiagram: '',
+            activeBoardTitle: concept || 'Teacher Board',
+            currentPage: 'dashboard',
+        });
+        get().createSession(`Visualize: ${concept ? concept.substring(0, 20) + '...' : 'Classroom Board'}`);
+    },
+    openDiagramOnBoard: (diagramCode, title = 'Diagram from Chat') => {
+        set({
+            isVisualizeMode: true,
+            isInterviewMode: false,
+            activeConcept: '', // Empty to avoid triggering a new Ollama prompt
+            activeBoardDiagram: diagramCode,
+            activeBoardTitle: title,
+            currentPage: 'dashboard'
+        });
+    },
+    exitVisualizeMode: () => {
+        set({
+            isVisualizeMode: false,
+            activeConcept: '',
+            activeBoardDiagram: '',
+            activeBoardTitle: '',
+            currentPage: 'dashboard',
+        });
+        // Keeps the existing active session and messages!
+    },
+    setBoardDiagram: (diagram, title = '') => {
+        set((state) => ({
+            activeBoardDiagram: diagram,
+            activeBoardTitle: title || state.activeBoardTitle || 'Visual Explanation'
+        }));
+    },
+
+    // ─── AI Slide Deck Studio (PPT Mode) ───
+    isPptMode: false,
+    activePptDeck: loadStorage('tyloop_active_ppt', null),
+    currentSlideIndex: 0,
+    isPptPresenting: false,
+
+    startPptMode: (deck) => {
+        set({
+            isPptMode: true,
+            isInterviewMode: false,
+            isVisualizeMode: false,
+            activePptDeck: deck,
+            currentSlideIndex: 0,
+            currentPage: 'dashboard'
+        });
+        if (deck) {
+            saveStorage('tyloop_active_ppt', deck);
+        }
+    },
+    exitPptMode: () => {
+        set({
+            isPptMode: false,
+            isPptPresenting: false,
+            currentPage: 'dashboard'
+        });
+    },
+    setActivePptDeck: (deck) => {
+        set({ activePptDeck: deck });
+        saveStorage('tyloop_active_ppt', deck);
+    },
+    setCurrentSlideIndex: (idx) => set({ currentSlideIndex: idx }),
+    setIsPptPresenting: (val) => set({ isPptPresenting: val }),
 
     addMessage: (message) => {
         const newMessages = [...get().messages, message];
@@ -120,17 +266,21 @@ const useAppStore = create((set, get) => ({
     }),
 
     fetchSessions: () => {
-        const sessions = loadStorage('tyloop_sessions', []);
-        set({ sessions });
-        if (sessions.length > 0) {
-            if (!get().currentSession) {
-                const latest = sessions[0];
-                set({ currentSession: latest });
-                get().loadSessionMessages(latest.id);
-            }
-        } else {
-            set({ currentSession: null, messages: [] });
+        let sessions = loadStorage('tyloop_sessions', []);
+        if (sessions.length === 0) {
+            const newSession = {
+                id: crypto.randomUUID(),
+                user_id: 'guest',
+                title: 'New Chat',
+                created_at: new Date().toISOString()
+            };
+            sessions = [newSession];
+            saveStorage('tyloop_sessions', sessions);
         }
+        set({ sessions });
+        const active = get().currentSession || sessions[0];
+        set({ currentSession: active });
+        get().loadSessionMessages(active.id);
     },
 
     createSession: () => {

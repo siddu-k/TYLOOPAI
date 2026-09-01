@@ -3,7 +3,7 @@ import useAppStore from '../../stores/appStore';
 import ChatMessage from './ChatMessage';
 import ImageUpload from './ImageUpload';
 import VoiceControls from '../voice/VoiceControls';
-import { streamChat, fileToBase64 } from '../../services/ollamaService';
+import { streamChat, fileToBase64, extractMermaidDiagram } from '../../services/ollamaService';
 import { speak, stopSpeaking, enqueueSpeech, startListening as startSTT, stopListening as stopSTT, isSTTSupported } from '../../services/voiceService';
 
 export default function ChatPanel() {
@@ -13,7 +13,9 @@ export default function ChatPanel() {
         saveMessage, toggleSidebar, setIsSpeaking,
         isSpeaking, isListening, setIsListening,
         selectedModel, userName, isInterviewMode,
-        interviewStarted, setInterviewStarted
+        interviewStarted, setInterviewStarted,
+        isVisualizeMode, activeConcept, setBoardDiagram,
+        activeBoardDiagram, isAvatarEnabled, toggleAvatarEnabled
     } = useAppStore();
 
     const [input, setInput] = useState('');
@@ -25,15 +27,25 @@ export default function ChatPanel() {
     const [isCallMode, setIsCallMode] = useState(false);
     const [triggerRestart, setTriggerRestart] = useState(false);
 
-    const messagesEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
     const abortRef = useRef(null);
     const inputRef = useRef(null);
     const isProcessingRef = useRef(false); // keep local ref for sub-tick protection
     const currentRequestIdRef = useRef(0);
+    const isAutoScrollLockedRef = useRef(false);
+
+    // Detect if user has scrolled up away from bottom
+    const handleScroll = (e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        isAutoScrollLockedRef.current = distanceFromBottom > 90;
+    };
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (chatContainerRef.current && !isAutoScrollLockedRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [messages, isAiTyping]);
 
     // Auto-enable Voice Call for Interview Mode
     useEffect(() => {
@@ -59,6 +71,13 @@ export default function ChatPanel() {
             setInterviewStarted(false);
         }
     }, [isInterviewMode, interviewStarted, messages.length, isAiTyping]);
+
+    // Auto-start Visualize Class Trigger
+    useEffect(() => {
+        if (isVisualizeMode && activeConcept && messages.length === 0 && !isAiTyping && !activeBoardDiagram) {
+            handleSend(`Teach me about "${activeConcept}". Draw a detailed Mermaid flowchart on the blackboard and explain it step-by-step.`);
+        }
+    }, [isVisualizeMode, activeConcept, messages.length, isAiTyping, activeBoardDiagram]);
 
     // Real-time Voice-to-Voice Loop
     useEffect(() => {
@@ -116,9 +135,14 @@ export default function ChatPanel() {
         if (store.isProcessing) return;
         const trimmed = typeof text === 'string' ? text.trim() : '';
         if (!trimmed && !attachedImage) return;
-        if (!currentSession) return;
+
+        let activeSession = currentSession;
+        if (!activeSession) {
+            activeSession = store.createSession();
+        }
 
         store.setIsProcessing(true);
+        isAutoScrollLockedRef.current = false;
 
         // Clear input state immediately
         setInput('');
@@ -128,8 +152,15 @@ export default function ChatPanel() {
         setImagePreview(null);
 
         try {
+            // Update session title if default
+            if (activeSession.title === 'New Chat' && trimmed) {
+                const newTitle = trimmed.length > 25 ? trimmed.substring(0, 25) + '...' : trimmed;
+                const updatedSessions = store.sessions.map(s => s.id === activeSession.id ? { ...s, title: newTitle } : s);
+                store.setSessions(updatedSessions);
+            }
+
             // 1. Save and add User message (saveMessage internally calls addMessage)
-            const userMsg = await saveMessage(currentSession.id, 'user', trimmed, currentPreview);
+            const userMsg = await saveMessage(activeSession.id, 'user', trimmed, currentPreview);
 
             // 2. Prepare history for Ollama
             const chatHistory = messages.map(m => ({ role: m.role, content: m.content }));
@@ -157,8 +188,11 @@ export default function ChatPanel() {
             if (abortRef.current) abortRef.current.abort();
             abortRef.current = new AbortController();
 
-            // Critical: clear queue and start speaking indicator
-            speak('', () => setIsSpeaking(true), () => setIsSpeaking(false));
+            // Only speak automatically if 3D Avatar is enabled or in Call Mode
+            const shouldAutoSpeak = (isAvatarEnabled || isCallMode);
+            if (shouldAutoSpeak) {
+                speak('', () => setIsSpeaking(true), () => setIsSpeaking(false));
+            }
 
             let spokenLength = 0;
             const fullResponse = await streamChat(
@@ -167,36 +201,56 @@ export default function ChatPanel() {
                     if (requestId !== currentRequestIdRef.current) return;
                     updateLastMessage(partial);
 
-                    // Improved Sentence Splitting Logic
-                    let workingText = partial.substring(spokenLength);
-                    const sentenceRegex = /[^.?!]+[.?!](?:\s+|$)/g;
-                    let match;
+                    // Extract and update live Mermaid whiteboard diagram if present
+                    const liveDiagram = extractMermaidDiagram(partial);
+                    if (liveDiagram) {
+                        store.setBoardDiagram(liveDiagram);
+                    }
 
-                    while ((match = sentenceRegex.exec(workingText)) !== null) {
-                        const sentence = match[0];
-                        if (sentence.trim()) {
-                            enqueueSpeech(sentence);
-                            spokenLength += (match.index + sentence.length);
-                            // Adjust workingText for the next possible match in SAME chunk
-                            workingText = partial.substring(spokenLength);
-                            sentenceRegex.lastIndex = 0;
+                    // Improved Sentence Splitting Logic
+                    if (shouldAutoSpeak) {
+                        let workingText = partial.substring(spokenLength);
+                        const sentenceRegex = /[^.?!]+[.?!](?:\s+|$)/g;
+                        let match;
+
+                        while ((match = sentenceRegex.exec(workingText)) !== null) {
+                            const sentence = match[0];
+                            if (sentence.trim()) {
+                                enqueueSpeech(sentence);
+                                spokenLength += (match.index + sentence.length);
+                                // Adjust workingText for the next possible match in SAME chunk
+                                workingText = partial.substring(spokenLength);
+                                sentenceRegex.lastIndex = 0;
+                            }
                         }
                     }
                 },
                 abortRef.current.signal,
                 selectedModel,
-                { isInterviewMode: store.isInterviewMode, jobDescription: store.activeJobDescription }
+                {
+                    isInterviewMode: store.isInterviewMode,
+                    jobDescription: store.activeJobDescription,
+                    isVisualizeMode: store.isVisualizeMode,
+                    activeConcept: store.activeConcept
+                }
             );
 
             if (requestId === currentRequestIdRef.current) {
-                const remainingText = fullResponse.substring(spokenLength);
-                if (remainingText.trim()) {
-                    enqueueSpeech(remainingText);
+                const finalDiagram = extractMermaidDiagram(fullResponse);
+                if (finalDiagram) {
+                    store.setBoardDiagram(finalDiagram);
+                }
+
+                if (shouldAutoSpeak) {
+                    const remainingText = fullResponse.substring(spokenLength);
+                    if (remainingText.trim()) {
+                        enqueueSpeech(remainingText);
+                    }
                 }
             }
         } catch (err) {
             if (err.name !== 'AbortError') {
-                updateLastMessage(`⚠️ Connection Error: ${err.message}`);
+                updateLastMessage(`Connection Error: ${err.message}`);
             }
         } finally {
             setIsAiTyping(false);
@@ -235,15 +289,21 @@ export default function ChatPanel() {
     };
 
     const handleStopGeneration = () => {
-        if (abortRef.current) abortRef.current.abort();
+        if (abortRef.current) {
+            abortRef.current.abort();
+            abortRef.current = null;
+        }
         stopSpeaking();
+        setIsSpeaking(false);
+        setIsAiTyping(false);
+        useAppStore.getState().setIsProcessing(false);
     };
 
     return (
         <div className={`flex flex-col h-full bg-transparent ${isInterviewMode ? 'border-none' : ''}`}>
             {/* Header - Hide in Interview Mode */}
             {!isInterviewMode && (
-                <header className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-sm">
+                <header className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-950/50 backdrop-blur-sm flex-shrink-0">
                     <button onClick={toggleSidebar} className="lg:hidden p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
                     </button>
@@ -251,18 +311,42 @@ export default function ChatPanel() {
                         <h1 className="text-sm font-semibold text-zinc-50">{currentSession?.title || 'New Chat'}</h1>
                         <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{selectedModel}</p>
                     </div>
-                    {isSTTSupported() && (
+
+                    <div className="flex items-center gap-2">
+                        {/* 3D Assistant Toggle */}
                         <button
-                            onClick={() => setIsCallMode(!isCallMode)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${isCallMode ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-50'}`}
+                            onClick={toggleAvatarEnabled}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border transition-all ${isAvatarEnabled
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            title={isAvatarEnabled ? 'Turn 3D Assistant OFF' : 'Turn 3D Assistant ON'}
                         >
-                            {isCallMode ? 'End Call' : 'Voice Call'}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                            </svg>
+                            <span>3D {isAvatarEnabled ? 'ON' : 'OFF'}</span>
                         </button>
-                    )}
+
+                        {isSTTSupported() && (
+                            <button
+                                onClick={() => setIsCallMode(!isCallMode)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${isCallMode ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-50'}`}
+                            >
+                                {isCallMode ? 'End Call' : 'Voice Call'}
+                            </button>
+                        )}
+                    </div>
                 </header>
             )}
 
-            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800">
+            <div
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800"
+            >
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center py-12 px-6 max-w-md mx-auto">
                         <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 mb-6 flex items-center justify-center">
@@ -295,8 +379,20 @@ export default function ChatPanel() {
                 {messages.map((msg, i) => (
                     <ChatMessage key={i} message={msg} isTyping={isAiTyping && i === messages.length - 1 && msg.role === 'assistant'} />
                 ))}
-                <div ref={messagesEndRef} />
             </div>
+
+            {/* Stop Pill when AI is generating or speaking */}
+            {(isAiTyping || isSpeaking) && (
+                <div className="px-4 pb-2 flex justify-center">
+                    <button
+                        onClick={handleStopGeneration}
+                        className="flex items-center gap-2 px-4 py-1.5 bg-zinc-900/90 hover:bg-zinc-800 text-rose-400 hover:text-rose-300 border border-rose-500/30 hover:border-rose-500/60 rounded-full text-xs font-semibold shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-[1.02] group animate-fade-in"
+                    >
+                        <span className="w-2.5 h-2.5 rounded-xs bg-rose-500 group-hover:scale-90 transition-transform" />
+                        <span>{isAiTyping ? 'Stop Generating' : 'Stop Speaking'}</span>
+                    </button>
+                </div>
+            )}
 
             {imagePreview && (
                 <div className="px-4 pb-2">
@@ -329,13 +425,27 @@ export default function ChatPanel() {
                         />
                     </div>
                     <VoiceControls onResult={handleVoiceResult} />
-                    {isAiTyping ? (
-                        <button onClick={handleStopGeneration} className="p-3 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition-all border border-rose-500/20">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+                    {(isAiTyping || isSpeaking) ? (
+                        <button
+                            onClick={handleStopGeneration}
+                            title={isAiTyping ? "Stop generating" : "Stop speaking"}
+                            className="p-3 bg-rose-500/15 text-rose-400 hover:text-rose-300 rounded-xl hover:bg-rose-500/25 transition-all border border-rose-500/30 flex-shrink-0 shadow-lg shadow-rose-500/10 group"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="6" width="12" height="12" rx="2" />
+                            </svg>
                         </button>
                     ) : (
-                        <button onClick={() => handleSend()} disabled={!input.trim() && !attachedImage} className="p-3 bg-white text-black rounded-xl hover:bg-zinc-200 transition-all disabled:opacity-20 flex-shrink-0 shadow-lg shadow-white/5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                        <button
+                            onClick={() => handleSend()}
+                            disabled={!input.trim() && !attachedImage}
+                            className="p-3 bg-white text-black rounded-xl hover:bg-zinc-200 transition-all disabled:opacity-20 flex-shrink-0 shadow-lg shadow-white/5"
+                            title="Send message"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
                         </button>
                     )}
                 </div>

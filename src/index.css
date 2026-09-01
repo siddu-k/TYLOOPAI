@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ============================================================
-   DHANVANTARI AI — DESIGN SYSTEM
+   TYLOOP AI — DESIGN SYSTEM
    Standard Shadcn Zinc Dark Theme
    ============================================================ */
 
@@ -72,11 +72,50 @@ h4 {
 }
 
 p,
-span,
 button,
 input,
 textarea {
   font-size: 0.875rem;
+}
+
+/* ============================================================
+   MERMAID DIAGRAM RENDERING OVERRIDES (PREVENTS TEXT OVERFLOW)
+   ============================================================ */
+svg[id^="mermaid-"],
+svg[id^="mermaid-"] g {
+  overflow: visible !important;
+}
+
+svg[id^="mermaid-"] text,
+svg[id^="mermaid-"] .nodeLabel,
+svg[id^="mermaid-"] .label,
+svg[id^="mermaid-"] span {
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  text-overflow: unset !important;
+}
+
+svg[id^="mermaid-"] foreignObject {
+  overflow: visible !important;
+}
+
+svg[id^="mermaid-"] foreignObject > div {
+  padding: 4px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  overflow: visible !important;
+}
+
+svg[id^="mermaid-"] .node rect,
+svg[id^="mermaid-"] .node circle,
+svg[id^="mermaid-"] .node polygon,
+svg[id^="mermaid-"] .node path {
+  stroke-width: 1.5px !important;
 }
 
 html,

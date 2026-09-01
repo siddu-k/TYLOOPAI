@@ -103,6 +103,20 @@ export default function Sidebar() {
                         <h4 className="px-2 mb-2 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Assistant Hub</h4>
                         <nav className="space-y-1">
                             <button
+                                onClick={() => setCurrentPage('visualize')}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-50 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+                                <span>Visualize & Learn</span>
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage('ppt')}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-50 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="14" x="3" y="3" rx="2" /><path d="M7 21h10" /><path d="M12 17v4" /><path d="m9 9 6 3-6 3Z" /></svg>
+                                <span>AI Slide Deck Studio</span>
+                            </button>
+                            <button
                                 onClick={() => setCurrentPage('interview')}
                                 className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-50 transition-colors"
                             >
@@ -123,6 +137,26 @@ export default function Sidebar() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                                 <span>How to add Models</span>
                             </button>
+
+                            {/* 3D Model Toggle Row */}
+                            <div className="pt-2 border-t border-zinc-900 px-1">
+                                <button
+                                    onClick={useAppStore.getState().toggleAvatarEnabled}
+                                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800/80 transition-all text-xs group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={useAppStore.getState().isAvatarEnabled ? 'text-emerald-400' : 'text-zinc-500'}>
+                                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                                        </svg>
+                                        <span className="font-medium text-zinc-300">3D Avatar</span>
+                                    </div>
+                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${useAppStore((s) => s.isAvatarEnabled) ? 'bg-emerald-500' : 'bg-zinc-700'}`}>
+                                        <div className={`w-3 h-3 rounded-full bg-white transition-transform ${useAppStore((s) => s.isAvatarEnabled) ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                </button>
+                            </div>
                         </nav>
                     </div>
                 </div>

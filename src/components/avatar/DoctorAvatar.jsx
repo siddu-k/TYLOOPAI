@@ -1,13 +1,77 @@
 import { useAnimations, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { VISEMES } from 'wawa-lipsync';
 import { lipsyncManager } from '../../services/lipsyncService';
+import useAppStore from '../../stores/appStore';
 
 export function DoctorAvatar(props) {
     const { nodes, materials, scene } = useGLTF('/models/64f1a714fe61576b46f27ca2.glb');
-    const { animations } = useGLTF('/models/animations.glb');
+    const { animations: rawAnimations } = useGLTF('/models/animations.glb');
+    const { avatarCustomization } = useAppStore();
+
+    // Filter animation tracks to only match bones/nodes that exist in the avatar scene
+    const animations = useMemo(() => {
+        if (!rawAnimations || !scene) return [];
+        return rawAnimations.map((clip) => {
+            const filteredTracks = clip.tracks.filter((track) => {
+                const nodeName = track.name.split('.')[0];
+                return !!scene.getObjectByName(nodeName) || !!nodes[nodeName];
+            });
+            const cleanClip = clip.clone();
+            cleanClip.tracks = filteredTracks;
+            return cleanClip;
+        });
+    }, [rawAnimations, scene, nodes]);
+
+    // Dynamically clone and tint materials with avatar customization
+    const customMaterials = useMemo(() => {
+        if (!materials) return {};
+        const { hairColor, skinTone, eyeColor, outfitColor, bottomColor } = avatarCustomization || {};
+
+        const hairMat = materials.Wolf3D_Hair ? materials.Wolf3D_Hair.clone() : null;
+        if (hairMat && hairColor) {
+            hairMat.color = new THREE.Color(hairColor);
+            hairMat.roughness = 0.55;
+        }
+
+        const skinMat = materials.Wolf3D_Skin ? materials.Wolf3D_Skin.clone() : null;
+        if (skinMat && skinTone) {
+            skinMat.color = new THREE.Color(skinTone);
+        }
+
+        const bodyMat = materials.Wolf3D_Body ? materials.Wolf3D_Body.clone() : null;
+        if (bodyMat && skinTone) {
+            bodyMat.color = new THREE.Color(skinTone);
+        }
+
+        const eyeMat = materials.Wolf3D_Eye ? materials.Wolf3D_Eye.clone() : null;
+        if (eyeMat && eyeColor) {
+            eyeMat.color = new THREE.Color(eyeColor);
+        }
+
+        const outfitTopMat = materials.Wolf3D_Outfit_Top ? materials.Wolf3D_Outfit_Top.clone() : null;
+        if (outfitTopMat && outfitColor) {
+            outfitTopMat.color = new THREE.Color(outfitColor);
+        }
+
+        const outfitBottomMat = materials.Wolf3D_Outfit_Bottom ? materials.Wolf3D_Outfit_Bottom.clone() : null;
+        if (outfitBottomMat && bottomColor) {
+            outfitBottomMat.color = new THREE.Color(bottomColor);
+        }
+
+        return {
+            hair: hairMat || materials.Wolf3D_Hair,
+            skin: skinMat || materials.Wolf3D_Skin,
+            body: bodyMat || materials.Wolf3D_Body,
+            eye: eyeMat || materials.Wolf3D_Eye,
+            top: outfitTopMat || materials.Wolf3D_Outfit_Top,
+            bottom: outfitBottomMat || materials.Wolf3D_Outfit_Bottom,
+            teeth: materials.Wolf3D_Teeth,
+            footwear: materials.Wolf3D_Outfit_Footwear
+        };
+    }, [materials, avatarCustomization]);
 
     const group = useRef();
     const { actions, mixer } = useAnimations(animations, group);
@@ -22,44 +86,87 @@ export function DoctorAvatar(props) {
             .fadeIn(mixer.stats.actions.inUse === 0 ? 0 : 0.5)
             .play();
         return () => actions[animation]?.fadeOut(0.5);
-    }, [animation]);
+    }, [animation, actions, mixer]);
 
-    const lerpMorphTarget = (target, value, speed = 0.1) => {
+    // Cache skinned meshes with morph targets for 60fps performance
+    const morphMeshes = useRef([]);
+
+    useEffect(() => {
+        const list = [];
         scene.traverse((child) => {
-            if (child.isSkinnedMesh && child.morphTargetDictionary) {
-                const index = child.morphTargetDictionary[target];
-                if (index === undefined || child.morphTargetInfluences[index] === undefined) {
-                    return;
-                }
-                child.morphTargetInfluences[index] = THREE.MathUtils.lerp(
-                    child.morphTargetInfluences[index],
+            if (child.isSkinnedMesh && child.morphTargetDictionary && child.morphTargetInfluences) {
+                list.push(child);
+            }
+        });
+        morphMeshes.current = list;
+    }, [scene]);
+
+    const setMorphTarget = (target, value, speed = 0.3) => {
+        for (let i = 0; i < morphMeshes.current.length; i++) {
+            const mesh = morphMeshes.current[i];
+            const index = mesh.morphTargetDictionary[target];
+            if (index !== undefined && mesh.morphTargetInfluences[index] !== undefined) {
+                mesh.morphTargetInfluences[index] = THREE.MathUtils.lerp(
+                    mesh.morphTargetInfluences[index],
                     value,
                     speed
                 );
             }
-        });
+        }
     };
 
     const [blink, setBlink] = useState(false);
 
-    useFrame(() => {
+    useFrame((state) => {
         // Blinking
-        lerpMorphTarget('eyeBlinkLeft', blink ? 1 : 0, 0.5);
-        lerpMorphTarget('eyeBlinkRight', blink ? 1 : 0, 0.5);
+        setMorphTarget('eyeBlinkLeft', blink ? 1 : 0, 0.5);
+        setMorphTarget('eyeBlinkRight', blink ? 1 : 0, 0.5);
 
         // Process audio for lip sync
         lipsyncManager.processAudio();
 
-        // Lip sync visemes
-        const viseme = lipsyncManager.viseme;
-        const state = lipsyncManager.state;
+        const features = lipsyncManager.features;
+        const currentViseme = lipsyncManager.viseme;
+        const speechState = lipsyncManager.state;
 
-        lerpMorphTarget(viseme, 1, state === 'vowel' ? 0.2 : 0.4);
+        // Dynamic volume analysis
+        const volume = features?.volume || 0;
+        const isSpeaking = speechState !== 'silence' && volume > 0.03;
 
-        Object.values(VISEMES).forEach((value) => {
-            if (viseme === value) return;
-            lerpMorphTarget(value, 0, state === 'vowel' ? 0.1 : 0.2);
+        // Controlled mouth opening amplitude (calibrated to prevent wide gaping)
+        const targetIntensity = isSpeaking
+            ? THREE.MathUtils.clamp(volume * 2.2, 0.2, 0.65)
+            : 0;
+
+        // Apply active viseme with calibrated intensity
+        if (isSpeaking && currentViseme && currentViseme !== VISEMES.sil) {
+            // Apply slight damping to wide vowels so they look natural
+            let visemeMultiplier = 1.0;
+            if (currentViseme === VISEMES.aa) visemeMultiplier = 0.85; // Natural jaw drop without gaping
+            if (currentViseme === VISEMES.PP) visemeMultiplier = 0.9;  // Clean lip seal
+
+            const attackSpeed = speechState === 'vowel' ? 0.35 : 0.45;
+            setMorphTarget(currentViseme, targetIntensity * visemeMultiplier, attackSpeed);
+        }
+
+        // Decay all other inactive visemes smoothly
+        Object.values(VISEMES).forEach((v) => {
+            if (isSpeaking && v === currentViseme) return;
+            setMorphTarget(v, 0, 0.25);
         });
+
+        // Keep secondary blendshapes neutral to prevent double-opening
+        setMorphTarget('jawOpen', 0, 0.2);
+        setMorphTarget('mouthOpen', 0, 0.2);
+
+        // Audio-reactive subtle head micro-movement while speaking
+        const headBone = nodes.Head || scene.getObjectByName('Head');
+        if (headBone && isSpeaking) {
+            const nod = Math.sin(state.clock.elapsedTime * 6) * 0.02 * targetIntensity;
+            const tilt = Math.sin(state.clock.elapsedTime * 3) * 0.015 * targetIntensity;
+            headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, nod, 0.1);
+            headBone.rotation.z = THREE.MathUtils.lerp(headBone.rotation.z, tilt, 0.1);
+        }
     });
 
     // Blinking interval
@@ -81,18 +188,19 @@ export function DoctorAvatar(props) {
     return (
         <group {...props} dispose={null} ref={group}>
             <primitive object={nodes.Hips} />
-            <skinnedMesh name="Wolf3D_Body" geometry={nodes.Wolf3D_Body.geometry} material={materials.Wolf3D_Body} skeleton={nodes.Wolf3D_Body.skeleton} />
-            <skinnedMesh name="Wolf3D_Outfit_Bottom" geometry={nodes.Wolf3D_Outfit_Bottom.geometry} material={materials.Wolf3D_Outfit_Bottom} skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton} />
-            <skinnedMesh name="Wolf3D_Outfit_Footwear" geometry={nodes.Wolf3D_Outfit_Footwear.geometry} material={materials.Wolf3D_Outfit_Footwear} skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton} />
-            <skinnedMesh name="Wolf3D_Outfit_Top" geometry={nodes.Wolf3D_Outfit_Top.geometry} material={materials.Wolf3D_Outfit_Top} skeleton={nodes.Wolf3D_Outfit_Top.skeleton} />
-            <skinnedMesh name="Wolf3D_Hair" geometry={nodes.Wolf3D_Hair.geometry} material={materials.Wolf3D_Hair} skeleton={nodes.Wolf3D_Hair.skeleton} />
-            <skinnedMesh name="EyeLeft" geometry={nodes.EyeLeft.geometry} material={materials.Wolf3D_Eye} skeleton={nodes.EyeLeft.skeleton} morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary} morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences} />
-            <skinnedMesh name="EyeRight" geometry={nodes.EyeRight.geometry} material={materials.Wolf3D_Eye} skeleton={nodes.EyeRight.skeleton} morphTargetDictionary={nodes.EyeRight.morphTargetDictionary} morphTargetInfluences={nodes.EyeRight.morphTargetInfluences} />
-            <skinnedMesh name="Wolf3D_Head" geometry={nodes.Wolf3D_Head.geometry} material={materials.Wolf3D_Skin} skeleton={nodes.Wolf3D_Head.skeleton} morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary} morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences} />
-            <skinnedMesh name="Wolf3D_Teeth" geometry={nodes.Wolf3D_Teeth.geometry} material={materials.Wolf3D_Teeth} skeleton={nodes.Wolf3D_Teeth.skeleton} morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary} morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences} />
+            <skinnedMesh name="Wolf3D_Body" geometry={nodes.Wolf3D_Body.geometry} material={customMaterials.body || materials.Wolf3D_Body} skeleton={nodes.Wolf3D_Body.skeleton} />
+            <skinnedMesh name="Wolf3D_Outfit_Bottom" geometry={nodes.Wolf3D_Outfit_Bottom.geometry} material={customMaterials.bottom || materials.Wolf3D_Outfit_Bottom} skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton} />
+            <skinnedMesh name="Wolf3D_Outfit_Footwear" geometry={nodes.Wolf3D_Outfit_Footwear.geometry} material={customMaterials.footwear || materials.Wolf3D_Outfit_Footwear} skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton} />
+            <skinnedMesh name="Wolf3D_Outfit_Top" geometry={nodes.Wolf3D_Outfit_Top.geometry} material={customMaterials.top || materials.Wolf3D_Outfit_Top} skeleton={nodes.Wolf3D_Outfit_Top.skeleton} />
+            <skinnedMesh name="Wolf3D_Hair" geometry={nodes.Wolf3D_Hair.geometry} material={customMaterials.hair || materials.Wolf3D_Hair} skeleton={nodes.Wolf3D_Hair.skeleton} />
+            <skinnedMesh name="EyeLeft" geometry={nodes.EyeLeft.geometry} material={customMaterials.eye || materials.Wolf3D_Eye} skeleton={nodes.EyeLeft.skeleton} morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary} morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences} />
+            <skinnedMesh name="EyeRight" geometry={nodes.EyeRight.geometry} material={customMaterials.eye || materials.Wolf3D_Eye} skeleton={nodes.EyeRight.skeleton} morphTargetDictionary={nodes.EyeRight.morphTargetDictionary} morphTargetInfluences={nodes.EyeRight.morphTargetInfluences} />
+            <skinnedMesh name="Wolf3D_Head" geometry={nodes.Wolf3D_Head.geometry} material={customMaterials.skin || materials.Wolf3D_Skin} skeleton={nodes.Wolf3D_Head.skeleton} morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary} morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences} />
+            <skinnedMesh name="Wolf3D_Teeth" geometry={nodes.Wolf3D_Teeth.geometry} material={customMaterials.teeth || materials.Wolf3D_Teeth} skeleton={nodes.Wolf3D_Teeth.skeleton} morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary} morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences} />
         </group>
     );
 }
 
 useGLTF.preload('/models/64f1a714fe61576b46f27ca2.glb');
 useGLTF.preload('/models/animations.glb');
+

@@ -58,6 +58,7 @@ export function stopListening() {
 }
 
 import { lipsyncManager } from './lipsyncService';
+import useAppStore from '../stores/appStore';
 
 // ─── Text-to-Speech ───
 let currentAudio = null;
@@ -66,11 +67,17 @@ let isAudioPlaying = false;
 let onEndGlobal = null;
 
 export function isTTSSupported() {
-    // We are now using web audio, which is always supported
     return true;
 }
 
-// Helper to chunk text for the free TTS API limits
+export function getSystemVoices() {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        return window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+    }
+    return [];
+}
+
+// Helper to chunk text for free TTS API limits
 function chunkText(text) {
     const regex = /[^.?!]+[.?!]+|[^.?!]+$/g;
     return text.match(regex) || [text];
@@ -79,16 +86,26 @@ function chunkText(text) {
 function playNextChunk() {
     if (audioQueue.length === 0) {
         isAudioPlaying = false;
-        if (onEndGlobal) onEndGlobal();
+        if (onEndGlobal) {
+            const cb = onEndGlobal;
+            onEndGlobal = null;
+            cb();
+        }
         return;
     }
 
     const chunk = audioQueue.shift();
+    const { voiceSettings } = useAppStore.getState();
+    const rate = voiceSettings?.rate || 1.05;
+    const volume = voiceSettings?.volume ?? 1.0;
+
     // Use the Vite proxy `/api/tts` to bypass CORS for free high-quality human-like voice
     const url = `/api/tts/translate_tts?ie=UTF-8&tl=en-US&client=tw-ob&q=${encodeURIComponent(chunk.substring(0, 200))}`;
 
     currentAudio = new Audio(url);
     currentAudio.crossOrigin = "anonymous"; // Required for Web Audio API Analyzer
+    currentAudio.playbackRate = Math.min(2.0, Math.max(0.5, rate));
+    currentAudio.volume = Math.min(1.0, Math.max(0.0, volume));
 
     currentAudio.onended = () => {
         playNextChunk();
@@ -105,7 +122,6 @@ function playNextChunk() {
     isAudioPlaying = true;
     currentAudio.play().catch(err => {
         console.error("Audio playback prevented:", err);
-        // Playback might be prevented by browser autoplay policies
         playNextChunk();
     });
 }
@@ -135,16 +151,21 @@ export function enqueueSpeech(text) {
 export function stopSpeaking() {
     audioQueue = [];
     if (currentAudio) {
-        // Critical: remove event listeners BEFORE pausing/clearing src 
-        // to prevent asynchronous onerror callbacks from starting a parallel queue
         currentAudio.onended = null;
         currentAudio.onerror = null;
-
         currentAudio.pause();
         currentAudio.src = "";
         currentAudio = null;
     }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+    }
     isAudioPlaying = false;
+    if (onEndGlobal) {
+        const cb = onEndGlobal;
+        onEndGlobal = null;
+        cb();
+    }
 }
 
 export function isSpeaking() {
