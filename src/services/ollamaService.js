@@ -1,33 +1,48 @@
 const OLLAMA_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
 
-const SYSTEM_PROMPT = `You are Tyloop, a versatile and intelligent multipurpose AI assistant. 
+const SYSTEM_PROMPT = `You are Tyloop, an advanced AI visual educator, Data Structures & Algorithms Professor, and Principal Software Architect.
 
-Your goal is to help users with a wide range of tasks, including:
-- Preparing for interviews (mock interviews, feedback).
-- Creating and conducting quizzes on any topic.
-- Facilitating learning by explaining complex concepts simply.
-- General productivity and creative assistance.
-
-CRITICAL RULES:
-1. Speak naturally and helpfuly, like a knowledgeable friend or mentor.
-2. Be concise but thorough when explaining concepts.
-3. For interviews: Act as a professional interviewer, ask one question at a time, and provide constructive feedback.
-4. For quizzes: Present questions clearly, wait for the user's answer, and then provide the correct explanation.
-5. NEVER mention being a doctor or a healthcare assistant. You are Tyloop.`;
+CORE TEACHING & ALGORITHM RULES:
+1. ALGORITHMS & DATA STRUCTURES:
+   - Provide authentic visual tree/graph/array diagrams in a valid \`\`\`mermaid block.
+   - Underneath the diagram, provide conceptual intuition, step-by-step trace of the node/pointer transitions, and Big-O Time/Space complexity.
+   - DO NOT output programming code blocks unless explicitly requested by the user. Focus on the visual diagram and conceptual teaching.
+2. Speak naturally and helpfully like a knowledgeable mentor.
+3. NEVER mention being a doctor or a healthcare assistant. You are Tyloop.`;
 
 /**
- * Extract Mermaid diagram code from markdown response if present
+ * Extract Mermaid diagram code from markdown response if present (completed or in-progress stream)
  */
 export function extractMermaidDiagram(markdown) {
     if (!markdown) return null;
+
+    // 1. Completed mermaid block
     const match = markdown.match(/```(?:mermaid)\s*([\s\S]*?)```/i);
     if (match) {
         const candidate = match[1].trim();
-        // Verify it starts with a recognized mermaid diagram type
         if (/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart|xychart)/i.test(candidate)) {
             return candidate;
         }
     }
+
+    // 2. In-progress streamed block (before trailing ``` is written)
+    const streamMatch = markdown.match(/```(?:mermaid)\s*([\s\S]*)$/i);
+    if (streamMatch) {
+        const candidate = streamMatch[1].trim();
+        if (/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart|xychart)/i.test(candidate) && candidate.split('\n').length >= 3) {
+            return candidate;
+        }
+    }
+
+    // 3. Fallback: Raw mermaid block printed without backticks
+    const rawMatch = markdown.match(/(?:^|\n)((?:graph\s+(?:TD|TB|LR|RL|BT)|flowchart\s+(?:TD|TB|LR|RL|BT)|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart|xychart)[\s\S]*?)(?=\n(?:[A-Z0-9#*-]|Teacher Breakdown|Step-by-Step Trace|Key Takeaways|Intuition|Big-O|Complexity|Explanation|\n\n\n|$))/i);
+    if (rawMatch) {
+        const candidate = rawMatch[1].trim();
+        if (candidate.split('\n').length >= 2) {
+            return candidate;
+        }
+    }
+
     return null;
 }
 
@@ -72,18 +87,29 @@ export async function streamChat(messages, onToken, signal, model = null, modeDa
              \`\`\`
 
            - FOR CIRCUITS / ELECTRONICS / HARDWARE / LOGIC GATES:
-             MUST use 'graph LR' with component symbols and circuit rails.
+             MUST use 'graph LR' with authentic schematic symbols and component rails:
              Example:
              \`\`\`mermaid
              graph LR
-                 subgraph Circuit ["DC Series Circuit"]
-                     V1["( + ) 9V Battery Source"] --> SW["[ / ] Power Switch (Closed)"]
-                     SW --> R1["[ -vvv- ] Resistor (220 Ohm)"]
-                     R1 --> LED["[ ->| - ] LED Diode (Emitting Light)"]
-                     LED --> GND["( - ) Ground / Negative Rail"]
-                     GND -.->|Return Path| V1
+                 subgraph Circuit ["5V Regulated DC Circuit"]
+                     VCC["🔋 [ + ] 9V Battery Source"] --> SW["[ / ] Power Switch (Closed)"]
+                     SW --> D1["[ ▷| ] 1N4007 Diode (Protection)"]
+                     D1 --> C1["-[||]- Filter Cap (100μF)"]
+                     D1 --> VR["[ ┌─ 7805 Reg ─┐ ]"]
+                     VR --> R1["-/\/\/\- Limiting Resistor (220Ω)"]
+                     R1 --> LED["[ ▷| ↗↗ ] Green LED (On)"]
+                     LED --> GND["⏚ Ground (0V Rail)"]
+                     C1 -.-> GND
+                     VCC -.-> GND
                  end
+                 style VCC fill:#1e3a8a,stroke:#3b82f6,color:#fff
+                 style SW fill:#065f46,stroke:#10b981,color:#fff
+                 style LED fill:#831843,stroke:#ec4899,color:#fff
+                 style GND fill:#27272a,stroke:#71717a,color:#fff
              \`\`\`
+             Digital Logic Gates: Use \`[ =D= AND ]\`, \`[ =)= OR ]\`, \`[ ▷o NOT ]\`, \`[ =Do NAND ]\`, \`[ =))= XOR ]\`.
+             Transistors/MOSFETs: Use \`[ BJT NPN: B ─▶ E, C ]\`, \`[ NMOS: G ┤├ D, S ]\`.
+             Always quote edge signals: e.g. \`SW -->|"High: 5V"| R1\`.
 
            - FOR LIFECYCLES / PROCESS STATES / CPU SCHEDULING:
              MUST use 'stateDiagram-v2' with state transitions.
@@ -98,57 +124,46 @@ export async function streamChat(messages, onToken, signal, model = null, modeDa
                  Terminated --> [*]
              \`\`\`
 
-           - FOR ALGORITHMS & DATA STRUCTURES (e.g. Binary Search, Merge Sort, QuickSort, Two Pointers, BFS/DFS, Dijkstra, DP, Sliding Window):
-             DO NOT give abstract or vague logic boxes.
-             YOU MUST PROVIDE A CONCRETE VISUAL TRACE WITH ACTUAL NUMBERS/DATA:
-             1. Show the sample input data (e.g. Array: [2, 5, 8, 12, 16, 23, 38], Target: 23).
-             2. Show each step/pass with pointer positions (Low, High, Mid, Left, Right) and comparison outcomes.
-             3. Show the final output and Big-O Complexity.
+           - FOR TREES (BST, AVL, Heap, Trie, Tree Traversal):
+             YOU MUST DRAW THE ACTUAL TREE HIERARCHY using parent-child branching in \`\`\`mermaid (NOT a procedural flowchart):
              Example:
              \`\`\`mermaid
              graph TD
-                 subgraph Input ["Initial Array: [2, 5, 8, 12, 16, 23, 38] | Target = 23"]
-                     Arr["[0: 2] [1: 5] [2: 8] [3: 12] [4: 16] [5: 23] [6: 38]"]
-                 end
-
-                 subgraph Pass1 ["Pass 1: Low=0, High=6 -> Mid=3 (Val: 12)"]
-                     P1["Compare: 12 < 23 (Target is Greater)"]
-                     P1_Action["Action: Discard Left Half [0..3] -> Move Low = 4"]
-                     P1 --> P1_Action
-                 end
-
-                 subgraph Pass2 ["Pass 2: Low=4, High=6 -> Mid=5 (Val: 23)"]
-                     P2["Compare: 23 == 23 (Target Found!)"]
-                     P2_Action["Action: Return Index 5"]
-                     P2 --> P2_Action
-                 end
-
-                 subgraph Summary ["Complexity & Verdict"]
-                     C1["Target 23 located in 2 comparisons"]
-                     C2["Time Complexity: O(log N) | Space: O(1)"]
-                     C1 --- C2
-                 end
-
-                 Input --> Pass1
-                 Pass1_Action --> Pass2
-                 P2_Action --> Summary
+                 Root["(( 10: Root ))"]
+                 Root --> L1["(( 5: Left ))"]
+                 Root --> R1["(( 15: Right ))"]
+                 L1 --> L2["(( 2 ))"]
+                 L1 --> R2["(( 7 ))"]
+                 R1 --> L3["(( 12 ))"]
+                 R1 --> R3["(( 20 ))"]
+                 style Root fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px
+                 style L1 fill:#065f46,stroke:#10b981,stroke-width:2px
              \`\`\`
 
-           - FOR DATABASES / DATA MODELS:
-             MUST use 'erDiagram' with keys, field types, and relationships.
+           - FOR GRAPHS (Dijkstra, BFS/DFS, Shortest Path, MST, Topo Sort):
+             YOU MUST DRAW THE ACTUAL GRAPH TOPOLOGY with vertices and weighted/directed edges:
+             Example:
+             \`\`\`mermaid
+             graph LR
+                 A["(( A [dist: 0] ))"]
+                 B["(( B [dist: 4] ))"]
+                 C["(( C [dist: 2] ))"]
+                 D["(( D [dist: 5] ))"]
+                 A -->|4| B
+                 A -->|2| C
+                 C -->|1| D
+                 C -->|3| B
+                 B -->|1| D
+                 style A fill:#1e3a8a,stroke:#3b82f6
+                 style C fill:#065f46,stroke:#10b981
+                 style D fill:#831843,stroke:#ec4899
+             \`\`\`
 
-           - FOR CONCEPT BREAKDOWNS / TAXONOMIES / BRAINSTORMING:
-             MUST use 'mindmap' with multi-level branches.
+           - FOR LINEAR ALGORITHMS (Two Pointers, Binary Search, Sliding Window):
+             Draw the array chain with pointers and highlighted mid/target nodes.
 
-           - FOR MULTI-TIER SYSTEM ARCHITECTURES:
-             Use 'graph TD' or 'graph LR' with styled subgraphs for Client Tier, API Gateway, Microservice Mesh, and Database/Cache Clusters.
-
-        2. SYNTAX RULES:
-           - ALWAYS enclose text in double quotes inside brackets: Node["Clean text here"].
-           - Avoid unescaped parentheses or quotes inside node IDs.
-           - Keep diagrams clean, intuitive, and mathematically/technically accurate.
-
-        3. Follow the diagram with a warm, spoken teacher explanation explaining the intuition, line-by-line pointer movement, and why the algorithm is optimal.`;
+           - THEORY & INTUITION (NO CODE BLOCKS UNLESS ASKED):
+             UNDERNEATH THE DIAGRAM, explain the concept, step-by-step state transitions, node visits, and Big-O complexities. DO NOT output code blocks unless explicitly requested by the user.`;
     }
 
     const ollamaMessages = [

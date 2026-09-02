@@ -3,7 +3,7 @@ import useAppStore from '../../stores/appStore';
 import ChatMessage from './ChatMessage';
 import ImageUpload from './ImageUpload';
 import VoiceControls from '../voice/VoiceControls';
-import { streamChat, fileToBase64, extractMermaidDiagram } from '../../services/ollamaService';
+import { streamChat, fileToBase64, extractMermaidDiagram, isGeminiModel, listLocalModels, POPULAR_GEMINI_MODELS } from '../../services/aiService';
 import { speak, stopSpeaking, enqueueSpeech, startListening as startSTT, stopListening as stopSTT, isSTTSupported } from '../../services/voiceService';
 
 export default function ChatPanel() {
@@ -12,10 +12,11 @@ export default function ChatPanel() {
         sessions, currentSession, isAiTyping, setIsAiTyping,
         saveMessage, toggleSidebar, setIsSpeaking,
         isSpeaking, isListening, setIsListening,
-        selectedModel, userName, isInterviewMode,
+        selectedModel, setSelectedModel, userName, isInterviewMode,
         interviewStarted, setInterviewStarted,
         isVisualizeMode, activeConcept, setBoardDiagram,
-        activeBoardDiagram, isAvatarEnabled, toggleAvatarEnabled
+        activeBoardDiagram, isAvatarEnabled, toggleAvatarEnabled,
+        localModels, setLocalModels
     } = useAppStore();
 
     const [input, setInput] = useState('');
@@ -53,6 +54,17 @@ export default function ChatPanel() {
             setIsCallMode(true);
         }
     }, [isInterviewMode, interviewStarted]);
+
+    // Fetch local Ollama models on mount if needed
+    useEffect(() => {
+        if (!localModels || localModels.length === 0) {
+            listLocalModels().then((models) => {
+                if (models && models.length > 0) {
+                    setLocalModels(models);
+                }
+            }).catch(() => {});
+        }
+    }, []);
 
     // Cleanup state when session changes
     useEffect(() => {
@@ -307,9 +319,57 @@ export default function ChatPanel() {
                     <button onClick={toggleSidebar} className="lg:hidden p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
                     </button>
-                    <div className="flex-1">
-                        <h1 className="text-sm font-semibold text-zinc-50">{currentSession?.title || 'New Chat'}</h1>
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{selectedModel}</p>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-sm font-semibold text-zinc-50 truncate">{currentSession?.title || 'New Chat'}</h1>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <div className="relative inline-flex items-center">
+                                <select
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="appearance-none bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 font-medium text-[11px] rounded-lg pl-2 pr-6 py-1 cursor-pointer transition-all focus:outline-none focus:border-blue-500"
+                                    title="Switch between Google Gemini & Local AI models"
+                                >
+                                    <optgroup label="✨ Google GenAI (Cloud)">
+                                        {POPULAR_GEMINI_MODELS.map((m) => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.name} ({m.tag})
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="💻 Local AI (Ollama)">
+                                        {localModels && localModels.length > 0 ? (
+                                            localModels.map((m) => (
+                                                <option key={m.name} value={m.name}>
+                                                    {m.name} (Local)
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="qwen2.5-coder:7b">Qwen 2.5 Coder 7B (Local)</option>
+                                                <option value="qwen3-vl:4b">Qwen 3 VL 4B (Local)</option>
+                                                <option value="llama3.2:3b">Llama 3.2 3B (Local)</option>
+                                                <option value="mistral:latest">Mistral 7B (Local)</option>
+                                            </>
+                                        )}
+                                    </optgroup>
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2 pointer-events-none text-zinc-500"><path d="m6 9 6 6 6-6" /></svg>
+                            </div>
+
+                            {isGeminiModel(selectedModel) ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                    Google Cloud
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    Local Offline
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2">

@@ -60,7 +60,7 @@ export default function MermaidBoard() {
     const [isDragging, setIsDragging] = useState(false);
     const dragStartRef = useRef({ x: 0, y: 0 });
     const [copied, setCopied] = useState(false);
-    const [boardTheme, setBoardTheme] = useState('chalkboard'); // chalkboard | obsidian | slate
+    const [boardTheme, setBoardTheme] = useState('chalkboard'); // chalkboard | obsidian | white
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
@@ -171,21 +171,21 @@ export default function MermaidBoard() {
     const themeStyles = {
         chalkboard: 'bg-[#0e1310] border-emerald-900/40 text-emerald-100',
         obsidian: 'bg-[#09090b] border-zinc-800 text-zinc-100',
-        slate: 'bg-[#0f172a] border-slate-800 text-slate-100'
+        white: 'bg-white border-zinc-300 text-zinc-900'
     };
 
     return (
         <div className={`relative flex flex-col h-full w-full rounded-3xl overflow-hidden border shadow-2xl transition-all duration-300 ${themeStyles[boardTheme]} ${isFullscreen ? 'fixed inset-4 z-50 rounded-2xl' : ''}`}>
             {/* Whiteboard Top Toolbar */}
-            <header className="px-5 py-3.5 flex items-center justify-between border-b border-white/10 bg-black/30 backdrop-blur-md z-10 flex-shrink-0">
+            <header className={`px-5 py-3.5 flex items-center justify-between border-b transition-colors ${boardTheme === 'white' ? 'border-zinc-200 bg-zinc-50/90' : 'border-white/10 bg-black/30'} backdrop-blur-md z-10 flex-shrink-0`}>
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${boardTheme === 'white' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-white/5 border-white/10'}`}>
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className={`text-[11px] font-bold uppercase tracking-wider ${boardTheme === 'white' ? 'text-emerald-700' : 'text-emerald-300'}`}>
                             Smart Blackboard
                         </span>
                     </div>
-                    <h2 className="text-sm font-semibold truncate text-white max-w-[200px] sm:max-w-xs md:max-w-md">
+                    <h2 className={`text-sm font-semibold truncate max-w-[200px] sm:max-w-xs md:max-w-md ${boardTheme === 'white' ? 'text-zinc-900' : 'text-white'}`}>
                         {activeBoardTitle || 'Visual Learning Stage'}
                     </h2>
                 </div>
@@ -193,24 +193,24 @@ export default function MermaidBoard() {
                 {/* Toolbar Controls */}
                 <div className="flex items-center gap-2">
                     {/* Theme Selector */}
-                    <div className="hidden sm:flex items-center bg-black/40 border border-white/10 rounded-xl p-0.5">
+                    <div className={`hidden sm:flex items-center rounded-xl p-0.5 border ${boardTheme === 'white' ? 'bg-zinc-200/70 border-zinc-300' : 'bg-black/40 border-white/10'}`}>
                         <button
                             onClick={() => setBoardTheme('chalkboard')}
-                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${boardTheme === 'chalkboard' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50' : 'text-zinc-400 hover:text-white'}`}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${boardTheme === 'chalkboard' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50' : boardTheme === 'white' ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'}`}
                         >
                             Chalk
                         </button>
                         <button
                             onClick={() => setBoardTheme('obsidian')}
-                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${boardTheme === 'obsidian' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${boardTheme === 'obsidian' ? 'bg-zinc-800 text-white' : boardTheme === 'white' ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'}`}
                         >
                             Dark
                         </button>
                         <button
-                            onClick={() => setBoardTheme('slate')}
-                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${boardTheme === 'slate' ? 'bg-slate-800 text-blue-300' : 'text-zinc-400 hover:text-white'}`}
+                            onClick={() => setBoardTheme('white')}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${boardTheme === 'white' ? 'bg-white text-zinc-950 font-extrabold shadow-sm border border-zinc-300' : 'text-zinc-400 hover:text-white'}`}
                         >
-                            Slate
+                            White
                         </button>
                     </div>
 
@@ -296,16 +296,16 @@ export default function MermaidBoard() {
                 {/* Floating Bottom Left Navigation / Presets */}
                 {svgContent && (
                     <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
-                        <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 text-[11px] text-zinc-300 flex items-center gap-2 shadow-lg">
-                            <span className="text-emerald-400 font-mono font-bold">{Math.round(zoom * 100)}%</span>
-                            <span className="text-zinc-600">•</span>
+                        <div className={`px-3 py-1.5 backdrop-blur-md rounded-xl border text-[11px] flex items-center gap-2 shadow-lg ${boardTheme === 'white' ? 'bg-white/90 border-zinc-300 text-zinc-800' : 'bg-black/60 border-white/10 text-zinc-300'}`}>
+                            <span className={`font-mono font-bold ${boardTheme === 'white' ? 'text-emerald-700' : 'text-emerald-400'}`}>{Math.round(zoom * 100)}%</span>
+                            <span className="opacity-40">•</span>
                             <span>Drag to pan</span>
-                            <span className="text-zinc-600">•</span>
+                            <span className="opacity-40">•</span>
                             <span>Scroll to zoom</span>
                         </div>
                         <button
                             onClick={handleFitView}
-                            className="px-2.5 py-1.5 bg-black/60 hover:bg-zinc-800 backdrop-blur-md rounded-xl border border-white/10 text-[10px] font-bold text-zinc-300 hover:text-white transition-all shadow-lg"
+                            className={`px-2.5 py-1.5 backdrop-blur-md rounded-xl border text-[10px] font-bold transition-all shadow-lg ${boardTheme === 'white' ? 'bg-white hover:bg-zinc-100 border-zinc-300 text-zinc-800 hover:text-black' : 'bg-black/60 hover:bg-zinc-800 border-white/10 text-zinc-300 hover:text-white'}`}
                             title="Fit diagram to view"
                         >
                             Fit
@@ -315,24 +315,24 @@ export default function MermaidBoard() {
 
                 {/* Floating Bottom Right Quick Zoom Controls */}
                 {svgContent && (
-                    <div className="absolute bottom-4 right-4 z-10 flex items-center bg-black/60 backdrop-blur-md rounded-xl border border-white/10 p-1 shadow-lg gap-1">
+                    <div className={`absolute bottom-4 right-4 z-10 flex items-center backdrop-blur-md rounded-xl border p-1 shadow-lg gap-1 ${boardTheme === 'white' ? 'bg-white/90 border-zinc-300' : 'bg-black/60 border-white/10'}`}>
                         <button
                             onClick={handleZoomOut}
-                            className="w-7 h-7 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/10 rounded-lg text-sm font-bold transition-all"
+                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${boardTheme === 'white' ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' : 'text-zinc-300 hover:text-white hover:bg-white/10'}`}
                             title="Zoom Out"
                         >
                             -
                         </button>
                         <button
                             onClick={handleResetView}
-                            className="px-2 text-[10px] font-mono text-zinc-300 hover:text-emerald-400"
+                            className={`px-2 text-[10px] font-mono ${boardTheme === 'white' ? 'text-zinc-700 hover:text-emerald-700' : 'text-zinc-300 hover:text-emerald-400'}`}
                             title="Reset 100%"
                         >
                             1x
                         </button>
                         <button
                             onClick={handleZoomIn}
-                            className="w-7 h-7 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/10 rounded-lg text-sm font-bold transition-all"
+                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${boardTheme === 'white' ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' : 'text-zinc-300 hover:text-white hover:bg-white/10'}`}
                             title="Zoom In"
                         >
                             +
@@ -342,7 +342,7 @@ export default function MermaidBoard() {
 
                 {svgContent ? (
                     <div
-                        className="transition-transform duration-75 ease-out origin-center flex items-center justify-center will-change-transform max-w-none"
+                        className={`transition-transform duration-75 ease-out origin-center flex items-center justify-center will-change-transform max-w-none ${boardTheme === 'white' ? 'filter invert hue-rotate-180 brightness-95 contrast-125' : ''}`}
                         style={{
                             transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
                         }}

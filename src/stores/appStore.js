@@ -18,7 +18,17 @@ const saveStorage = (key, value) => {
 const useAppStore = create((set, get) => ({
     // ─── Profile & Settings ───
     userName: loadStorage('tyloop_user_name', null),
-    selectedModel: loadStorage('tyloop_selected_model', 'qwen2.5-coder:7b'),
+    selectedModel: (() => {
+        const stored = loadStorage('tyloop_selected_model', 'gemini-3.5-flash-lite');
+        // If stored was another Gemini model, normalize to gemini-3.5-flash-lite
+        if (stored && stored.startsWith('gemini') && stored !== 'gemini-3.5-flash-lite') {
+            saveStorage('tyloop_selected_model', 'gemini-3.5-flash-lite');
+            return 'gemini-3.5-flash-lite';
+        }
+        return stored || 'gemini-3.5-flash-lite';
+    })(),
+    aiProvider: loadStorage('tyloop_ai_provider', 'gemini'), // 'gemini' | 'local'
+    geminiApiKey: loadStorage('tyloop_gemini_api_key', import.meta.env.VITE_GEMINI_API_KEY || ''),
     authLoading: false,
     isProcessing: false,
     isInterviewMode: false,
@@ -29,6 +39,15 @@ const useAppStore = create((set, get) => ({
     activeBoardDiagram: '',
     activeBoardTitle: '',
     isAvatarEnabled: loadStorage('tyloop_avatar_enabled', true),
+
+    setAiProvider: (provider) => {
+        set({ aiProvider: provider });
+        saveStorage('tyloop_ai_provider', provider);
+    },
+    setGeminiApiKey: (key) => {
+        set({ geminiApiKey: key });
+        saveStorage('tyloop_gemini_api_key', key);
+    },
 
     setIsAvatarEnabled: (val) => {
         set({ isAvatarEnabled: val });
@@ -223,6 +242,8 @@ const useAppStore = create((set, get) => ({
         });
         if (deck) {
             saveStorage('tyloop_active_ppt', deck);
+            const title = deck.topic || deck.title || 'Presentation';
+            get().createSession(`Deck: ${title.substring(0, 24)}`);
         }
     },
     exitPptMode: () => {
@@ -238,6 +259,90 @@ const useAppStore = create((set, get) => ({
     },
     setCurrentSlideIndex: (idx) => set({ currentSlideIndex: idx }),
     setIsPptPresenting: (val) => set({ isPptPresenting: val }),
+
+    updateCurrentSlide: (slideUpdates) => {
+        set((state) => {
+            if (!state.activePptDeck || !state.activePptDeck.slides) return {};
+            const nextSlides = [...state.activePptDeck.slides];
+            const currentIndex = state.currentSlideIndex;
+            if (currentIndex >= 0 && currentIndex < nextSlides.length) {
+                nextSlides[currentIndex] = {
+                    ...nextSlides[currentIndex],
+                    ...slideUpdates
+                };
+                const nextDeck = {
+                    ...state.activePptDeck,
+                    slides: nextSlides
+                };
+                saveStorage('tyloop_active_ppt', nextDeck);
+                return { activePptDeck: nextDeck };
+            }
+            return {};
+        });
+    },
+
+    addSlideAfterCurrent: (newSlide) => {
+        set((state) => {
+            if (!state.activePptDeck) return {};
+            const currentSlides = state.activePptDeck.slides || [];
+            const insertIndex = state.currentSlideIndex + 1;
+            const createdSlide = newSlide || {
+                slideNumber: insertIndex + 1,
+                layout: 'dense_grid',
+                title: 'New Slide Topic',
+                subtitle: 'Deep-dive into component behavior',
+                points: [
+                    'Key structural component analysis and state transitions',
+                    'Operational parameters and runtime performance characteristics',
+                    'Failure modes, resilience guarantees, and fallback strategies'
+                ],
+                technicalDetails: 'Latency: < 5ms | Space: O(N) | State: Invariant',
+                diagram: '',
+                callout: 'Optimizes throughput by decoupling critical execution stages.',
+                speakerNotes: 'This slide provides an architectural walkthrough of the newly added component.'
+            };
+
+            const updatedSlides = [
+                ...currentSlides.slice(0, insertIndex),
+                createdSlide,
+                ...currentSlides.slice(insertIndex)
+            ].map((s, idx) => ({ ...s, slideNumber: idx + 1 }));
+
+            const updatedDeck = {
+                ...state.activePptDeck,
+                slideCount: updatedSlides.length,
+                slides: updatedSlides
+            };
+            saveStorage('tyloop_active_ppt', updatedDeck);
+            return {
+                activePptDeck: updatedDeck,
+                currentSlideIndex: insertIndex
+            };
+        });
+    },
+
+    deleteCurrentSlide: () => {
+        set((state) => {
+            if (!state.activePptDeck || !state.activePptDeck.slides || state.activePptDeck.slides.length <= 1) return {};
+            const currentSlides = state.activePptDeck.slides;
+            const deleteIndex = state.currentSlideIndex;
+            const updatedSlides = currentSlides
+                .filter((_, idx) => idx !== deleteIndex)
+                .map((s, idx) => ({ ...s, slideNumber: idx + 1 }));
+
+            const nextIndex = Math.min(deleteIndex, updatedSlides.length - 1);
+            const updatedDeck = {
+                ...state.activePptDeck,
+                slideCount: updatedSlides.length,
+                slides: updatedSlides
+            };
+            saveStorage('tyloop_active_ppt', updatedDeck);
+            return {
+                activePptDeck: updatedDeck,
+                currentSlideIndex: nextIndex
+            };
+        });
+    },
 
     addMessage: (message) => {
         const newMessages = [...get().messages, message];

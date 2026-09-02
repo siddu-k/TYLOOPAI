@@ -1,4 +1,4 @@
-import { streamChat } from './ollamaService';
+import { streamChat } from './aiService';
 
 /**
  * Clean and extract JSON array or object from LLM response

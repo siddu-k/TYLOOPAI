@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import mermaid from 'mermaid';
@@ -75,11 +75,27 @@ function MermaidBlock({ code }) {
 
 import { speak, stopSpeaking } from '../../services/voiceService';
 
+function ensureMermaidFences(text) {
+    if (!text) return '';
+    if (text.includes('```mermaid')) return text;
+
+    const regex = /(?:^|\n)((?:graph\s+(?:TD|TB|LR|RL|BT)|flowchart\s+(?:TD|TB|LR|RL|BT)|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart|xychart)[\s\S]*?)(?=\n(?:[A-Z0-9#*-]|Teacher Breakdown|Step-by-Step Trace|Key Takeaways|Intuition|Big-O|Complexity|Explanation|\n\n\n|$))/i;
+
+    const match = text.match(regex);
+    if (match) {
+        const diagramCode = match[1].trim();
+        return text.replace(match[1], `\n\`\`\`mermaid\n${diagramCode}\n\`\`\`\n`);
+    }
+
+    return text;
+}
+
 export default function ChatMessage({ message, isTyping }) {
     const isUser = message.role === 'user';
     const { isSpeaking, setIsSpeaking } = useAppStore();
     const [isReadingThis, setIsReadingThis] = useState(false);
     const [copied, setCopied] = useState(false);
+    const formattedContent = useMemo(() => isUser ? message.content : ensureMermaidFences(message.content), [message.content, isUser]);
 
     // Keep isReadingThis synced if speaking stops globally
     useEffect(() => {
@@ -185,7 +201,7 @@ export default function ChatMessage({ message, isTyping }) {
                                         }
                                     }}
                                 >
-                                    {message.content}
+                                    {formattedContent}
                                 </ReactMarkdown>
                             </div>
 

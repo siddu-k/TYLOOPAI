@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import useAppStore from '../../stores/appStore';
 import { renderCachedMermaid, cleanMermaidCode } from '../../services/mermaidCache';
 import { speak, stopSpeaking, isSpeaking } from '../../services/voiceService';
+import PptLiveChat from './PptLiveChat';
 
 export default function PptDeckViewer() {
     const {
@@ -14,6 +15,8 @@ export default function PptDeckViewer() {
     const [isReadingSlide, setIsReadingSlide] = useState(false);
     const [diagramSvg, setDiagramSvg] = useState('');
     const [diagramError, setDiagramError] = useState(null);
+    const [showLiveEditor, setShowLiveEditor] = useState(true);
+    const [showNavigator, setShowNavigator] = useState(false);
 
     const slides = activePptDeck?.slides || [];
     const currentSlide = slides[currentSlideIndex] || slides[0];
@@ -61,7 +64,7 @@ export default function PptDeckViewer() {
 
         renderSlideDiagram();
         return () => { isMounted = false; };
-    }, [currentSlide, currentSlideIndex]);
+    }, [currentSlide?.diagram, currentSlideIndex]);
 
     // Read Slide Aloud with 3D Avatar
     const handleReadSlideAloud = () => {
@@ -125,10 +128,10 @@ export default function PptDeckViewer() {
     }
 
     return (
-        <div className={`h-full flex flex-col bg-[#09090b] text-zinc-100 select-none overflow-hidden ${isPptPresenting ? 'fixed inset-0 z-50 bg-black' : ''}`}>
+        <div className={`h-full w-full flex flex-col bg-[#09090b] text-zinc-100 select-none overflow-hidden ${isPptPresenting ? 'fixed inset-0 z-50 bg-black' : ''}`}>
             
             {/* Top Toolbar */}
-            <header className="h-14 px-6 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md flex items-center justify-between flex-shrink-0 z-20">
+            <header className="h-14 px-4 sm:px-6 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md flex items-center justify-between flex-shrink-0 z-20">
                 <div className="flex items-center gap-3 overflow-hidden">
                     <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -143,6 +146,38 @@ export default function PptDeckViewer() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
+                    {/* Toggle Live AI Editor */}
+                    {!isPptPresenting && (
+                        <button
+                            onClick={() => setShowLiveEditor(!showLiveEditor)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                showLiveEditor
+                                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                                    : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-400'
+                            }`}
+                            title="Toggle AI Co-Pilot Live Chat"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+                            <span>AI Co-Pilot</span>
+                        </button>
+                    )}
+
+                    {/* Toggle Slide Navigator */}
+                    {!isPptPresenting && (
+                        <button
+                            onClick={() => setShowNavigator(!showNavigator)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                showNavigator
+                                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                                    : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-400'
+                            }`}
+                            title="Toggle Slide Reel"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                            <span>Slide Reel</span>
+                        </button>
+                    )}
+
                     {/* Read Aloud Button */}
                     <button
                         onClick={handleReadSlideAloud}
@@ -165,7 +200,7 @@ export default function PptDeckViewer() {
                     {/* Copy Markdown */}
                     <button
                         onClick={handleCopyMarkdown}
-                        className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+                        className="hidden md:flex px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold transition-all items-center gap-1.5"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
                         <span>{copied ? 'Copied' : 'Markdown'}</span>
@@ -174,11 +209,11 @@ export default function PptDeckViewer() {
                     {/* Print / PDF Export */}
                     <button
                         onClick={() => window.print()}
-                        className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+                        className="hidden sm:flex px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold transition-all items-center gap-1.5"
                         title="Export slides as PDF"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-                        <span>PDF Export</span>
+                        <span>PDF</span>
                     </button>
 
                     {/* Fullscreen / Presentation Mode */}
@@ -201,12 +236,21 @@ export default function PptDeckViewer() {
             </header>
 
             {/* Main Stage */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
                 
-                {/* Left Slide Drawer / Reel */}
-                {!isPptPresenting && (
-                    <aside className="w-64 border-r border-zinc-800/80 bg-zinc-950/70 p-3.5 overflow-y-auto space-y-2.5 flex-shrink-0 scrollbar-thin scrollbar-thumb-zinc-800">
-                        <div className="px-2 py-1 flex items-center justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                {/* ─── LEFT: LIVE AI SLIDE CO-PILOT & QUICK EDITOR ─── */}
+                {!isPptPresenting && showLiveEditor && (
+                    <PptLiveChat
+                        currentSlide={currentSlide}
+                        currentSlideIndex={currentSlideIndex}
+                        totalSlides={slides.length}
+                    />
+                )}
+
+                {/* ─── OPTIONAL: SLIDE NAVIGATOR REEL ─── */}
+                {!isPptPresenting && showNavigator && (
+                    <aside className="w-56 border-r border-zinc-800/80 bg-zinc-950/70 p-3 overflow-y-auto space-y-2 flex-shrink-0 scrollbar-thin scrollbar-thumb-zinc-800">
+                        <div className="px-1 py-1 flex items-center justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                             <span>Slide Navigator</span>
                             <span>{slides.length} Slides</span>
                         </div>
@@ -219,37 +263,40 @@ export default function PptDeckViewer() {
                                     setIsReadingSlide(false);
                                     setCurrentSlideIndex(idx);
                                 }}
-                                className={`w-full p-3 rounded-2xl border text-left transition-all flex flex-col gap-1.5 ${currentSlideIndex === idx ? 'border-emerald-400 bg-emerald-950/30 ring-1 ring-emerald-500/40 shadow-lg' : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'}`}
+                                className={`w-full p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${
+                                    currentSlideIndex === idx
+                                        ? 'border-emerald-400 bg-emerald-950/30 ring-1 ring-emerald-500/40 shadow-lg'
+                                        : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
+                                }`}
                             >
                                 <div className="flex items-center justify-between text-[10px]">
                                     <span className="font-mono font-bold text-zinc-400">#{s.slideNumber}</span>
                                     {s.diagram && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                                        <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">
                                             Diagram
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs font-bold text-zinc-200 line-clamp-2 leading-snug">{s.title}</p>
+                                <p className="text-[11px] font-bold text-zinc-200 line-clamp-1">{s.title}</p>
                             </button>
                         ))}
                     </aside>
                 )}
 
-                {/* Center High-Density Slide Canvas */}
-                <main className="flex-1 p-4 sm:p-6 flex flex-col items-center justify-center overflow-auto bg-gradient-to-b from-[#09090b] via-zinc-950 to-black">
-                    <div className="w-full max-w-5xl h-[calc(100vh-140px)] min-h-[500px] max-h-[720px] rounded-3xl border border-zinc-800 bg-zinc-950/95 shadow-2xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
+                {/* ─── CENTER: HIGH-DENSITY LIVE SLIDE CANVAS ─── */}
+                <main className="flex-1 p-4 sm:p-6 flex flex-col items-center justify-between overflow-y-auto bg-gradient-to-b from-[#09090b] via-zinc-950 to-black min-w-0">
+                    <div className="w-full max-w-5xl flex-1 flex flex-col justify-between rounded-3xl border border-zinc-800 bg-zinc-950/95 shadow-2xl p-6 sm:p-8 relative overflow-hidden my-auto min-h-[460px] max-h-[700px]">
                         
                         {/* Slide Top Metadata Bar */}
                         <div className="flex items-center justify-between border-b border-zinc-800 pb-3 flex-shrink-0">
-                            <div className="flex items-center gap-2.5">
-                                <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-bold text-emerald-400 font-mono">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-bold text-emerald-400 font-mono flex-shrink-0">
                                     Slide {currentSlide.slideNumber} of {slides.length}
                                 </span>
-                                <span className="text-xs font-medium text-zinc-400 truncate max-w-md">{activePptDeck.topic}</span>
+                                <span className="text-xs font-medium text-zinc-400 truncate">{activePptDeck.topic}</span>
                             </div>
                             {currentSlide.technicalDetails && (
-                                <span className="hidden sm:inline-block text-[10px] font-mono text-emerald-400/80 bg-emerald-950/40 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                                <span className="hidden md:inline-block text-[10px] font-mono text-emerald-400/80 bg-emerald-950/40 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
                                     {currentSlide.technicalDetails}
                                 </span>
                             )}
@@ -292,10 +339,10 @@ export default function PptDeckViewer() {
                                     </div>
 
                                     {/* Responsive Diagram Container */}
-                                    <div className="lg:col-span-7 h-full flex items-center justify-center bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 overflow-auto max-h-[400px]">
+                                    <div className="lg:col-span-7 h-full flex items-center justify-center bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 overflow-auto max-h-[360px]">
                                         {diagramSvg ? (
                                             <div
-                                                className="w-full flex items-center justify-center [&_svg]:max-h-[350px] [&_svg]:w-auto"
+                                                className="w-full flex items-center justify-center [&_svg]:max-h-[320px] [&_svg]:w-auto"
                                                 dangerouslySetInnerHTML={{ __html: diagramSvg }}
                                             />
                                         ) : diagramError ? (
@@ -349,11 +396,11 @@ export default function PptDeckViewer() {
                                 <span className="font-bold text-zinc-400">Speaker Script:</span>
                                 <span className="italic truncate">{currentSlide.speakerNotes || 'Concept presentation script active.'}</span>
                             </div>
-                            <span className="font-mono text-[10px]">Use Arrow Keys to Navigate</span>
+                            <span className="font-mono text-[10px] hidden sm:inline">Use Arrow Keys / Space to Navigate</span>
                         </div>
                     </div>
 
-                    {/* Bottom Slide Controller */}
+                    {/* Bottom Slide Controller & Carousel Strip */}
                     <div className="mt-4 flex items-center gap-3">
                         <button
                             onClick={() => {
@@ -368,8 +415,23 @@ export default function PptDeckViewer() {
                             <span>Previous</span>
                         </button>
 
-                        <div className="px-4 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-mono font-bold text-emerald-400">
-                            {currentSlideIndex + 1} / {slides.length}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl">
+                            {slides.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => {
+                                        stopSpeaking();
+                                        setIsReadingSlide(false);
+                                        setCurrentSlideIndex(i);
+                                    }}
+                                    className={`w-2.5 h-2.5 rounded-full transition-all ${
+                                        currentSlideIndex === i
+                                            ? 'bg-emerald-400 w-6'
+                                            : 'bg-zinc-700 hover:bg-zinc-500'
+                                    }`}
+                                    title={`Slide ${i + 1}`}
+                                />
+                            ))}
                         </div>
 
                         <button
