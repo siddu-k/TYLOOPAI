@@ -34,12 +34,13 @@
 
 @layer base {
   * {
-    @apply border-zinc-800;
+    border-color: #27272a;
     box-sizing: border-box;
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: #09090b;
+    color: #fafafa;
     font-family: 'Inter', -apple-system, sans-serif;
     margin: 0;
     padding: 0;
@@ -50,7 +51,11 @@
   h2,
   h3,
   h4 {
-    @apply font-semibold tracking-tight text-white mb-0 mt-0;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin-bottom: 0;
+    margin-top: 0;
   }
 }
 
