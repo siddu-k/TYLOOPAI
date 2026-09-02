@@ -82,8 +82,8 @@ const useAppStore = create((set, get) => ({
     // ─── 3D Avatar Customization ───
     avatarCustomization: loadStorage('tyloop_avatar_customization', {
         hairColor: '#2b231d',      // Dark Chestnut Brown
-        skinTone: '#e3ad82',       // Warm Natural Skin
-        eyeColor: '#2e7d32',       // Emerald Hazel
+        skinTone: '#f8d7c2',       // Fair Ivory
+        eyeColor: '#ffffff',       // Luminous / Crystal White
         outfitColor: '#18181b',    // Charcoal / Suit
         bottomColor: '#1e293b',    // Navy Slate
         lightingMood: 'clinical',  // clinical | cyberpunk | warm | studio
@@ -100,8 +100,8 @@ const useAppStore = create((set, get) => ({
     resetAvatarCustomization: () => {
         const defaultCustom = {
             hairColor: '#2b231d',
-            skinTone: '#e3ad82',
-            eyeColor: '#2e7d32',
+            skinTone: '#f8d7c2',
+            eyeColor: '#ffffff',
             outfitColor: '#18181b',
             bottomColor: '#1e293b',
             lightingMood: 'clinical',

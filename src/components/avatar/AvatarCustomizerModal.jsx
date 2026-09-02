@@ -23,6 +23,7 @@ const SKIN_PRESETS = [
 ];
 
 const EYE_PRESETS = [
+    { name: 'Crystal White', color: '#ffffff' },
     { name: 'Emerald Hazel', color: '#2e7d32' },
     { name: 'Ocean Blue', color: '#1e40af' },
     { name: 'Amber Brown', color: '#634e34' },
