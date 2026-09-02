@@ -349,4 +349,124 @@ body,
   color: #38bdf8;
   border-color: rgba(56, 189, 248, 0.4);
   font-weight: 600;
+}
+
+/* ============================================================
+   KATEX MATH, SYMBOLS & RICH MARKDOWN STYLING
+   ============================================================ */
+
+.katex {
+  font-size: 1.05em !important;
+  text-rendering: auto !important;
+  color: #34d399 !important; /* Emerald glowing math symbols */
+  font-family: 'KaTeX_Main', 'Times New Roman', serif !important;
+}
+
+.katex-display {
+  margin: 0.75em 0 !important;
+  padding: 0.5em 1em !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+.katex .mord.mathnormal {
+  font-style: italic !important;
+  color: #6ee7b7 !important;
+}
+
+.katex .mbin,
+.katex .mrel {
+  color: #38bdf8 !important; /* Cyan for operators = < > + - */
+}
+
+.katex .mopen,
+.katex .mclose {
+  color: #a1a1aa !important;
+}
+
+/* Chat & Slide Markdown Typography */
+.chat-markdown,
+.slide-markdown {
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.chat-markdown p,
+.slide-markdown p {
+  margin-bottom: 0.5rem;
+}
+
+.chat-markdown p:last-child,
+.slide-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown strong,
+.slide-markdown strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.chat-markdown em,
+.slide-markdown em {
+  font-style: italic;
+  color: #e4e4e7;
+}
+
+.chat-markdown ul,
+.slide-markdown ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin: 0.4rem 0;
+}
+
+.chat-markdown ol,
+.slide-markdown ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin: 0.4rem 0;
+}
+
+.chat-markdown li,
+.slide-markdown li {
+  margin-bottom: 0.25rem;
+}
+
+.chat-markdown blockquote,
+.slide-markdown blockquote {
+  border-left: 3px solid #10b981;
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: #a1a1aa;
+  font-style: italic;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+.chat-markdown table,
+.slide-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.8rem;
+}
+
+.chat-markdown th,
+.slide-markdown th {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #27272a;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-weight: 700;
+  color: #fafafa;
+}
+
+.chat-markdown td,
+.slide-markdown td {
+  border: 1px solid #27272a;
+  padding: 0.4rem 0.6rem;
+  color: #d4d4d8;
 }

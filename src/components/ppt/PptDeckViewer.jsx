@@ -1,8 +1,33 @@
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import useAppStore from '../../stores/appStore';
 import { renderCachedMermaid, cleanMermaidCode } from '../../services/mermaidCache';
 import { speak, stopSpeaking, isSpeaking } from '../../services/voiceService';
 import PptLiveChat from './PptLiveChat';
+
+function SlideMarkdown({ content, className = '' }) {
+    if (!content) return null;
+    return (
+        <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+            className={`slide-markdown inline-block ${className}`}
+            components={{
+                p: ({ children }) => <span>{children}</span>,
+                code: ({ children }) => (
+                    <code className="px-1.5 py-0.5 bg-zinc-800/80 text-emerald-300 font-mono text-[11px] rounded border border-zinc-700/50">
+                        {children}
+                    </code>
+                )
+            }}
+        >
+            {content}
+        </ReactMarkdown>
+    );
+}
 
 export default function PptDeckViewer() {
     const {
@@ -310,11 +335,11 @@ export default function PptDeckViewer() {
                                     <div className="lg:col-span-5 space-y-3.5 flex flex-col justify-center">
                                         <div>
                                             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight">
-                                                {currentSlide.title}
+                                                <SlideMarkdown content={currentSlide.title} />
                                             </h1>
                                             {currentSlide.subtitle && (
                                                 <p className="text-xs sm:text-sm font-semibold text-emerald-400 mt-1 leading-snug">
-                                                    {currentSlide.subtitle}
+                                                    <SlideMarkdown content={currentSlide.subtitle} />
                                                 </p>
                                             )}
                                         </div>
@@ -325,7 +350,9 @@ export default function PptDeckViewer() {
                                                     <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
                                                         {i + 1}
                                                     </div>
-                                                    <span>{pt}</span>
+                                                    <div className="flex-1">
+                                                        <SlideMarkdown content={pt} />
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -333,7 +360,7 @@ export default function PptDeckViewer() {
                                         {currentSlide.callout && (
                                             <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-300 font-medium flex items-center gap-2">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                                                <span>{currentSlide.callout}</span>
+                                                <SlideMarkdown content={currentSlide.callout} />
                                             </div>
                                         )}
                                     </div>
@@ -360,11 +387,11 @@ export default function PptDeckViewer() {
                                 <div className="space-y-4 flex flex-col justify-center">
                                     <div>
                                         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-                                            {currentSlide.title}
+                                            <SlideMarkdown content={currentSlide.title} />
                                         </h1>
                                         {currentSlide.subtitle && (
                                             <p className="text-sm sm:text-base font-semibold text-emerald-400 mt-1">
-                                                {currentSlide.subtitle}
+                                                <SlideMarkdown content={currentSlide.subtitle} />
                                             </p>
                                         )}
                                     </div>
@@ -375,7 +402,9 @@ export default function PptDeckViewer() {
                                                 <span className="w-5 h-5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                                                     {i + 1}
                                                 </span>
-                                                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal">{pt}</p>
+                                                <div className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal flex-1">
+                                                    <SlideMarkdown content={pt} />
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -383,7 +412,7 @@ export default function PptDeckViewer() {
                                     {currentSlide.callout && (
                                         <div className="p-3 rounded-2xl bg-emerald-950/25 border border-emerald-500/30 text-xs sm:text-sm text-emerald-300 font-medium flex items-center gap-2.5">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                                            <span>{currentSlide.callout}</span>
+                                            <SlideMarkdown content={currentSlide.callout} />
                                         </div>
                                     )}
                                 </div>

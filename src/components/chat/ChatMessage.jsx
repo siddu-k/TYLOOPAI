@@ -1,6 +1,8 @@
 import { useState, useEffect, useId, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import mermaid from 'mermaid';
 import useAppStore from '../../stores/appStore';
 import { renderCachedMermaid, cleanMermaidCode, mermaidSvgCache } from '../../services/mermaidCache';
@@ -276,7 +278,8 @@ export default function ChatMessage({ message, isTyping }) {
                         <div>
                             <div className="chat-markdown text-sm leading-relaxed">
                                 <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
+                                    remarkPlugins={[remarkGfm, remarkMath]}
+                                    rehypePlugins={[rehypeKatex]}
                                     components={{
                                         code({ node, inline, className, children, ...props }) {
                                             const match = /language-(\w+)/.exec(className || '');
