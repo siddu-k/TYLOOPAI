@@ -3,7 +3,7 @@ import useAppStore from '../../stores/appStore';
 import ChatMessage from './ChatMessage';
 import ImageUpload from './ImageUpload';
 import VoiceControls from '../voice/VoiceControls';
-import { streamChat, fileToBase64, extractMermaidDiagram, isGeminiModel, listLocalModels, POPULAR_GEMINI_MODELS } from '../../services/aiService';
+import { streamChat, fileToBase64, extractMermaidDiagram, extract3DCode, isGeminiModel, listLocalModels, POPULAR_GEMINI_MODELS } from '../../services/aiService';
 import { speak, stopSpeaking, enqueueSpeech, startListening as startSTT, stopListening as stopSTT, isSTTSupported } from '../../services/voiceService';
 
 export default function ChatPanel() {
@@ -86,8 +86,13 @@ export default function ChatPanel() {
 
     // Auto-start Visualize Class Trigger
     useEffect(() => {
-        if (isVisualizeMode && activeConcept && messages.length === 0 && !isAiTyping && !activeBoardDiagram) {
-            handleSend(`Teach me about "${activeConcept}". Draw a detailed Mermaid flowchart on the blackboard and explain it step-by-step.`);
+        const store = useAppStore.getState();
+        if (isVisualizeMode && activeConcept && messages.length === 0 && !isAiTyping && !activeBoardDiagram && !store.active3DCode) {
+            if (store.visualDimension === '3d') {
+                handleSend(`Create an interactive 3D spatial model for "${activeConcept}". Output verified Three.js scene code inside a javascript code block with animated kinematics.`);
+            } else {
+                handleSend(`Teach me about "${activeConcept}". Draw a detailed 2D visual schematic or Mermaid diagram on the blackboard and explain it step-by-step.`);
+            }
         }
     }, [isVisualizeMode, activeConcept, messages.length, isAiTyping, activeBoardDiagram]);
 
@@ -213,10 +218,16 @@ export default function ChatPanel() {
                     if (requestId !== currentRequestIdRef.current) return;
                     updateLastMessage(partial);
 
-                    // Extract and update live Mermaid whiteboard diagram if present
+                    // Extract and update live Mermaid whiteboard diagram or SVG if present
                     const liveDiagram = extractMermaidDiagram(partial);
                     if (liveDiagram) {
                         store.setBoardDiagram(liveDiagram);
+                    }
+
+                    // Extract and update live 3D Three.js code if in 3D mode
+                    const live3D = extract3DCode(partial);
+                    if (live3D) {
+                        store.setActive3DCode(live3D);
                     }
 
                     // Improved Sentence Splitting Logic
@@ -243,6 +254,7 @@ export default function ChatPanel() {
                     isInterviewMode: store.isInterviewMode,
                     jobDescription: store.activeJobDescription,
                     isVisualizeMode: store.isVisualizeMode,
+                    visualDimension: store.visualDimension,
                     activeConcept: store.activeConcept
                 }
             );
@@ -251,6 +263,11 @@ export default function ChatPanel() {
                 const finalDiagram = extractMermaidDiagram(fullResponse);
                 if (finalDiagram) {
                     store.setBoardDiagram(finalDiagram);
+                }
+
+                const final3D = extract3DCode(fullResponse);
+                if (final3D) {
+                    store.setActive3DCode(final3D);
                 }
 
                 if (shouldAutoSpeak) {

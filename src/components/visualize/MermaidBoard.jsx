@@ -62,11 +62,57 @@ export default function MermaidBoard() {
     const [copied, setCopied] = useState(false);
     const [boardTheme, setBoardTheme] = useState('chalkboard'); // chalkboard | obsidian | white
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isReplaying, setIsReplaying] = useState(false);
+    const [streamedSvg, setStreamedSvg] = useState(null);
+
+    const handleReplay = () => {
+        if (isReplaying || !svgContent) return;
+        setIsReplaying(true);
+
+        const cleanSvg = svgContent.trim();
+        const startTagEnd = cleanSvg.indexOf('>');
+        let currentLength = startTagEnd !== -1 ? startTagEnd + 1 : 20;
+        const totalLength = cleanSvg.length;
+        const totalDuration = 2400;
+        const frameInterval = 25;
+        const totalSteps = totalDuration / frameInterval;
+        const chunkSize = Math.max(15, Math.ceil(totalLength / totalSteps));
+
+        const timer = setInterval(() => {
+            currentLength += chunkSize;
+            if (currentLength >= totalLength) {
+                setStreamedSvg(null);
+                setIsReplaying(false);
+                clearInterval(timer);
+            } else {
+                let chunk = cleanSvg.slice(0, currentLength);
+                if (chunk.includes('<svg') && !chunk.includes('</svg>')) {
+                    chunk += '\n</svg>';
+                }
+                setStreamedSvg(chunk);
+            }
+        }, frameInterval);
+    };
 
     useEffect(() => {
         let isMounted = true;
 
         async function renderChart() {
+            if (!activeBoardDiagram) {
+                setSvgContent('');
+                setRenderError(null);
+                return;
+            }
+
+            const trimmed = activeBoardDiagram.trim();
+            // If the content is an animated 2D SVG vector illustration
+            if (trimmed.startsWith('<svg') || (trimmed.includes('<svg') && trimmed.includes('</svg>'))) {
+                const svgOnly = trimmed.match(/<svg[\s\S]*?<\/svg>/i);
+                setSvgContent(svgOnly ? svgOnly[0] : trimmed);
+                setRenderError(null);
+                return;
+            }
+
             const cleanCode = cleanMermaidCode(activeBoardDiagram);
             if (!cleanCode) {
                 setSvgContent('');
@@ -177,19 +223,7 @@ export default function MermaidBoard() {
     return (
         <div className={`relative flex flex-col h-full w-full rounded-3xl overflow-hidden border shadow-2xl transition-all duration-300 ${themeStyles[boardTheme]} ${isFullscreen ? 'fixed inset-4 z-50 rounded-2xl' : ''}`}>
             {/* Whiteboard Top Toolbar */}
-            <header className={`px-5 py-3.5 flex items-center justify-between border-b transition-colors ${boardTheme === 'white' ? 'border-zinc-200 bg-zinc-50/90' : 'border-white/10 bg-black/30'} backdrop-blur-md z-10 flex-shrink-0`}>
-                <div className="flex items-center gap-3">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${boardTheme === 'white' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-white/5 border-white/10'}`}>
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className={`text-[11px] font-bold uppercase tracking-wider ${boardTheme === 'white' ? 'text-emerald-700' : 'text-emerald-300'}`}>
-                            Smart Blackboard
-                        </span>
-                    </div>
-                    <h2 className={`text-sm font-semibold truncate max-w-[200px] sm:max-w-xs md:max-w-md ${boardTheme === 'white' ? 'text-zinc-900' : 'text-white'}`}>
-                        {activeBoardTitle || 'Visual Learning Stage'}
-                    </h2>
-                </div>
-
+            <header className={`px-5 py-2.5 flex items-center justify-end border-b transition-colors ${boardTheme === 'white' ? 'border-zinc-200 bg-zinc-50/90' : 'border-white/10 bg-black/30'} backdrop-blur-md z-10 flex-shrink-0`}>
                 {/* Toolbar Controls */}
                 <div className="flex items-center gap-2">
                     {/* Theme Selector */}
@@ -238,6 +272,24 @@ export default function MermaidBoard() {
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
                         </button>
                     </div>
+
+                    {/* Replay Animation */}
+                    {svgContent && (
+                        <button
+                            onClick={handleReplay}
+                            disabled={isReplaying}
+                            className={`px-3 py-1.5 bg-black/40 hover:bg-white/10 text-zinc-300 hover:text-emerald-300 border border-white/10 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm ${isReplaying ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            title="Re-animate live diagram construction"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isReplaying ? 'animate-spin text-emerald-400' : ''}>
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                <path d="M3 3v5h5"/>
+                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                                <path d="M16 21h5v-5"/>
+                            </svg>
+                            <span className="text-[11px] font-bold">{isReplaying ? 'Streaming...' : 'Replay Animation'}</span>
+                        </button>
+                    )}
 
                     {/* Copy Code */}
                     {activeBoardDiagram && (
@@ -341,13 +393,15 @@ export default function MermaidBoard() {
                 )}
 
                 {svgContent ? (
-                    <div
-                        className={`transition-transform duration-75 ease-out origin-center flex items-center justify-center will-change-transform max-w-none ${boardTheme === 'white' ? 'filter invert hue-rotate-180 brightness-95 contrast-125' : ''}`}
-                        style={{
-                            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
-                        }}
-                        dangerouslySetInnerHTML={{ __html: svgContent }}
-                    />
+                    <div className="relative w-full min-h-full flex items-center justify-center">
+                        <div
+                            className={`transition-transform duration-75 ease-out origin-center flex items-center justify-center will-change-transform max-w-none w-full min-h-full p-6 [&>svg]:max-w-[95%] [&>svg]:h-auto [&>svg]:drop-shadow-[0_20px_50px_rgba(0,0,0,0.7)] ${boardTheme === 'white' ? 'filter invert hue-rotate-180 brightness-95 contrast-125' : ''}`}
+                            style={{
+                                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
+                            }}
+                            dangerouslySetInnerHTML={{ __html: streamedSvg || svgContent }}
+                        />
+                    </div>
                 ) : renderError ? (
                     <div className="text-center p-8 max-w-md mx-auto space-y-3 bg-red-950/20 border border-red-900/40 rounded-2xl">
                         <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto text-red-400">

@@ -1,4 +1,4 @@
-import { streamGeminiChat, generateGeminiSummary, isGeminiModel, POPULAR_GEMINI_MODELS, testGeminiApiKey, runGeminiInteraction } from './geminiService';
+import { streamGeminiChat, generateGeminiSummary, isGeminiModel, POPULAR_GEMINI_MODELS, testGeminiApiKey, runGeminiInteraction, extract3DCode } from './geminiService';
 import {
     streamChat as streamOllamaChat,
     generateSummary as generateOllamaSummary,
@@ -47,6 +47,7 @@ export {
     runGeminiInteraction,
     streamGeminiChat,
     generateGeminiSummary,
+    extract3DCode,
 
     // Ollama exports
     listLocalModels,

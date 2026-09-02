@@ -6,7 +6,10 @@ import AvatarScene from '../components/avatar/AvatarScene';
 import InterviewSetup from '../components/interview/InterviewSetup';
 import UserVideo from '../components/interview/UserVideo';
 import MermaidBoard from '../components/visualize/MermaidBoard';
+import CanvasEngine3D from '../components/visualize/CanvasEngine3D';
 import VisualizeSetup from '../components/visualize/VisualizeSetup';
+import Visualize2DSetup from '../components/visualize/Visualize2DSetup';
+import Visualize3DSetup from '../components/visualize/Visualize3DSetup';
 import AvatarCustomizerModal from '../components/avatar/AvatarCustomizerModal';
 import PptSetupModal from '../components/ppt/PptSetupModal';
 import PptDeckViewer from '../components/ppt/PptDeckViewer';
@@ -31,6 +34,7 @@ export default function DashboardPage() {
     const {
         fetchSessions, isInterviewMode, exitInterview,
         isVisualizeMode, exitVisualizeMode, activeBoardTitle,
+        visualDimension, setVisualDimension, active3DCode,
         isPptMode, exitPptMode, activePptDeck,
         currentPage, setCurrentPage, interviewStarted,
         isListening, isAiTyping, isSpeaking, isAvatarEnabled
@@ -173,6 +177,42 @@ export default function DashboardPage() {
                                             Visual Classroom
                                         </span>
                                     </div>
+
+                                    {/* Dimension Switcher: Basic Mermaid | 2D Vector | 3D Spatial */}
+                                    <div className="flex items-center bg-black/50 border border-zinc-800 rounded-xl p-0.5">
+                                        <button
+                                            onClick={() => setVisualDimension('basic')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                                                visualDimension === 'basic' || !visualDimension
+                                                    ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-sm'
+                                                    : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <span>Basic Mermaid</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setVisualDimension('2d')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                                                visualDimension === '2d'
+                                                    ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-sm'
+                                                    : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <span>2D Vector</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setVisualDimension('3d')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                                                visualDimension === '3d'
+                                                    ? 'bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 shadow-sm'
+                                                    : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                                            <span>3D Spatial</span>
+                                        </button>
+                                    </div>
+
                                     {isSpeaking && (
                                         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full">
                                             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
@@ -188,9 +228,13 @@ export default function DashboardPage() {
                                 </button>
                             </div>
 
-                            {/* Live Mermaid Board */}
-                            <div className="flex-1 min-h-0">
-                                <MermaidBoard />
+                            {/* Live 2D Board or 3D Spatial Canvas */}
+                            <div className="flex-1 min-h-0 relative rounded-2xl overflow-hidden border border-zinc-800/80 bg-zinc-950">
+                                {visualDimension === '3d' ? (
+                                    <CanvasEngine3D code={active3DCode} />
+                                ) : (
+                                    <MermaidBoard />
+                                )}
                             </div>
                         </div>
 
@@ -377,6 +421,12 @@ export default function DashboardPage() {
             )}
             {currentPage === 'visualize' && (
                 <VisualizeSetup onClose={() => setCurrentPage('dashboard')} />
+            )}
+            {currentPage === 'visualize2d' && (
+                <Visualize2DSetup onClose={() => setCurrentPage('dashboard')} />
+            )}
+            {currentPage === 'visualize3d' && (
+                <Visualize3DSetup onClose={() => setCurrentPage('dashboard')} />
             )}
         </div>
     );

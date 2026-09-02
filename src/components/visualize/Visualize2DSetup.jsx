@@ -1,62 +1,63 @@
 import { useState } from 'react';
 import useAppStore from '../../stores/appStore';
 
-export default function VisualizeSetup({ onClose }) {
+export default function Visualize2DSetup({ onClose }) {
     const [concept, setConcept] = useState('');
-    const { startVisualizeMode } = useAppStore();
+    const { startVisualizeMode, setVisualDimension } = useAppStore();
 
     const presets = [
         {
-            title: "OAuth 2.0 Auth Flow",
+            title: "Binary Search Tree (BST)",
+            category: "Data Structures",
+            prompt: "Draw a Binary Search Tree with nodes 50, 30, 70, 20, 40, 60, 80 and show search path for 60"
+        },
+        {
+            title: "Dijkstra's Shortest Path",
+            category: "Graph Theory",
+            prompt: "Draw a weighted graph and step-by-step trace Dijkstra's algorithm from vertex A to D"
+        },
+        {
+            title: "5V Regulated Power Circuit",
+            category: "Electronics",
+            prompt: "Draw a 5V regulated DC circuit diagram with transformer, rectifier diode, capacitor filter, 7805 regulator, and LED"
+        },
+        {
+            title: "Full Adder Logic Circuit",
+            category: "Digital Logic",
+            prompt: "Draw a 1-bit Full Adder circuit using XOR, AND, and OR logic gates with inputs A, B, Cin and outputs Sum, Cout"
+        },
+        {
+            title: "Sliding Window Maximum",
+            category: "Algorithms",
+            prompt: "Visualize the Sliding Window technique on array [1, 3, -1, -3, 5, 3, 6, 7] with window size k=3"
+        },
+        {
+            title: "OAuth 2.0 PKCE Flow",
             category: "Security",
-            prompt: "Explain the OAuth 2.0 Authorization Code Flow with a sequence diagram"
-        },
-        {
-            title: "How DNS Lookup Works",
-            category: "Networking",
-            prompt: "Explain how DNS resolution works step-by-step from browser to authoritative nameserver"
-        },
-        {
-            title: "React Component Lifecycle",
-            category: "Frontend",
-            prompt: "Explain the React Component Lifecycle and state re-rendering pipeline with a flowchart"
-        },
-        {
-            title: "Microservices Architecture",
-            category: "Backend",
-            prompt: "Explain a modern Microservices Architecture with API Gateway, Auth, Service Mesh, and Message Queue"
-        },
-        {
-            title: "Binary Search Algorithm",
-            category: "Computer Science",
-            prompt: "Explain how Binary Search works on a sorted array with a flowchart"
-        },
-        {
-            title: "Photosynthesis Process",
-            category: "Science",
-            prompt: "Explain the light-dependent and light-independent stages of photosynthesis with a diagram"
+            prompt: "Explain the OAuth 2.0 Authorization Code Flow with PKCE using a sequence diagram"
         }
     ];
 
     const handleStart = (selectedPrompt) => {
         const text = selectedPrompt || concept;
         if (!text.trim()) return;
-        startVisualizeMode(text.trim(), 'basic');
+        setVisualDimension('2d');
+        startVisualizeMode(text.trim(), '2d');
         onClose?.();
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md select-none">
             <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                 {/* Header */}
-                <div className="p-6 border-b border-zinc-800 bg-gradient-to-r from-emerald-500/10 via-zinc-900 to-transparent">
+                <div className="p-6 border-b border-zinc-800 bg-gradient-to-r from-emerald-500/15 via-zinc-900 to-transparent">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                             <span className="p-1 px-2.5 text-[10px] font-bold bg-emerald-500 text-black rounded-full uppercase tracking-wider">
-                                Teacher & Board
+                                2D Vector
                             </span>
                             <h2 className="text-xl font-bold text-zinc-50">
-                                Visualize Mode
+                                2D Vector & Schematic Visualizer
                             </h2>
                         </div>
                         <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors">
@@ -64,7 +65,7 @@ export default function VisualizeSetup({ onClose }) {
                         </button>
                     </div>
                     <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-                        Enter any concept or pick a preset topic. Tyloop will act as your visual educator, explaining the topic while drawing dynamic Mermaid flowcharts on the chalkboard.
+                        Generate dynamic Mermaid diagrams, authentic electronic circuit schematics, algorithm tree/graph topologies, and step-by-step traces.
                     </p>
                 </div>
 
@@ -74,7 +75,7 @@ export default function VisualizeSetup({ onClose }) {
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                            What do you want to learn?
+                            What 2D schematic or algorithm do you want to learn?
                         </label>
                         <div className="flex gap-2">
                             <input
@@ -82,7 +83,7 @@ export default function VisualizeSetup({ onClose }) {
                                 value={concept}
                                 onChange={(e) => setConcept(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-                                placeholder="e.g., How does HTTPS encryption work? or Graph Neural Networks"
+                                placeholder="e.g., Red-Black Tree insertion or H-Bridge Motor Driver circuit"
                                 className="flex-1 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 transition-all"
                                 autoFocus
                             />
@@ -98,7 +99,7 @@ export default function VisualizeSetup({ onClose }) {
 
                     {/* Presets */}
                     <div className="space-y-3">
-                        <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Popular Classroom Topics</p>
+                        <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Recommended 2D Schematics & Algorithmic Topologies</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             {presets.map((preset, i) => (
                                 <button

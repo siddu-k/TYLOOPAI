@@ -1,3 +1,5 @@
+import { SYSTEM_PROMPT as VISUAL_AI_SYSTEM_PROMPT, SYSTEM_PROMPT_3D as VISUAL_AI_SYSTEM_PROMPT_3D } from './visualAiPrompt';
+
 const OLLAMA_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
 
 const SYSTEM_PROMPT = `You are Tyloop, an advanced AI visual educator, Data Structures & Algorithms Professor, and Principal Software Architect.
@@ -15,6 +17,30 @@ CORE TEACHING & ALGORITHM RULES:
  */
 export function extractMermaidDiagram(markdown) {
     if (!markdown) return null;
+
+    // 0. Completed SVG vector block (2D Vector Engine)
+    const svgMatch = markdown.match(/```(?:svg|xml)?\s*(<svg[\s\S]*?<\/svg>)\s*```/i);
+    if (svgMatch) {
+        return svgMatch[1].trim();
+    }
+
+    // 0b. In-progress streamed SVG block
+    const streamSvgMatch = markdown.match(/```(?:svg|xml)?\s*(<svg[\s\S]*)$/i);
+    if (streamSvgMatch) {
+        let candidate = streamSvgMatch[1].trim();
+        if (candidate.startsWith('<svg')) {
+            if (!candidate.includes('</svg>')) {
+                candidate += '\n</svg>';
+            }
+            return candidate;
+        }
+    }
+
+    // 0c. Standalone raw SVG block without code fences
+    const rawSvgMatch = markdown.match(/<svg[\s\S]*?<\/svg>/i);
+    if (rawSvgMatch) {
+        return rawSvgMatch[0].trim();
+    }
 
     // 1. Completed mermaid block
     const match = markdown.match(/```(?:mermaid)\s*([\s\S]*?)```/i);
@@ -65,105 +91,39 @@ export async function streamChat(messages, onToken, signal, model = null, modeDa
         6. Do not break character. Wait for the candidate's response.
         7. In your first message, introduce yourself professionally as Tyloop and ask the first opening question.
         8. Use a sophisticated, corporate tone.`;
+    } else if (modeData?.isVisualizeMode && (modeData?.visualDimension === '3d' || modeData?.dimension === '3d')) {
+        systemPrompt = VISUAL_AI_SYSTEM_PROMPT_3D;
+    } else if (modeData?.isVisualizeMode && (modeData?.visualDimension === '2d' || modeData?.dimension === '2d')) {
+        systemPrompt = VISUAL_AI_SYSTEM_PROMPT;
     } else if (modeData?.isVisualizeMode) {
         systemPrompt = `You are Tyloop, a world-class Visual Educator and Technical Teacher.
-        CONTEXT: The student is in a visual classroom learning about: ${modeData.activeConcept || 'their requested topic'}.
+CONTEXT: The student is in a visual classroom learning about: ${modeData.activeConcept || 'their requested topic'}.
 
-        DIRECTIONS:
-        1. YOU MUST SELECT THE BEST DIAGRAM TYPE FOR THE SPECIFIC TOPIC:
-           - 📡 FOR PROTOCOLS / NETWORKING / CLIENT-SERVER (e.g. Stop & Wait, TCP 3-way handshake, DNS, OAuth, API exchange):
-             MUST use 'sequenceDiagram' with participants, sequential numbered arrows, and notes.
-             Example:
-             \`\`\`mermaid
-             sequenceDiagram
-                 autonumber
-                 participant S as "Sender (Host A)"
-                 participant R as "Receiver (Host B)"
-                 Note over S,R: Stop-and-Wait Transmission Cycle
-                 S->>R: Frame 0 (Data Packet)
-                 R-->>S: ACK 0 (Acknowledged)
-                 S->>R: Frame 1 (Data Packet)
-                 R-->>S: ACK 1 (Acknowledged)
-             \`\`\`
+DIRECTIONS:
+1. MANDATORY CODE FENCE:
+   - ALL MERMAID DIAGRAMS MUST BE ENCLOSED IN TRIPLE BACKTICKS:
+     \`\`\`mermaid
+     ...diagram code...
+     \`\`\`
+   - NEVER output bare 'graph TD' without the enclosing \`\`\`mermaid code fences.
 
-           - FOR CIRCUITS / ELECTRONICS / HARDWARE / LOGIC GATES:
-             MUST use 'graph LR' with authentic schematic symbols and component rails:
-             Example:
-             \`\`\`mermaid
-             graph LR
-                 subgraph Circuit ["5V Regulated DC Circuit"]
-                     VCC["🔋 [ + ] 9V Battery Source"] --> SW["[ / ] Power Switch (Closed)"]
-                     SW --> D1["[ ▷| ] 1N4007 Diode (Protection)"]
-                     D1 --> C1["-[||]- Filter Cap (100μF)"]
-                     D1 --> VR["[ ┌─ 7805 Reg ─┐ ]"]
-                     VR --> R1["-/\/\/\- Limiting Resistor (220Ω)"]
-                     R1 --> LED["[ ▷| ↗↗ ] Green LED (On)"]
-                     LED --> GND["⏚ Ground (0V Rail)"]
-                     C1 -.-> GND
-                     VCC -.-> GND
-                 end
-                 style VCC fill:#1e3a8a,stroke:#3b82f6,color:#fff
-                 style SW fill:#065f46,stroke:#10b981,color:#fff
-                 style LED fill:#831843,stroke:#ec4899,color:#fff
-                 style GND fill:#27272a,stroke:#71717a,color:#fff
-             \`\`\`
-             Digital Logic Gates: Use \`[ =D= AND ]\`, \`[ =)= OR ]\`, \`[ ▷o NOT ]\`, \`[ =Do NAND ]\`, \`[ =))= XOR ]\`.
-             Transistors/MOSFETs: Use \`[ BJT NPN: B ─▶ E, C ]\`, \`[ NMOS: G ┤├ D, S ]\`.
-             Always quote edge signals: e.g. \`SW -->|"High: 5V"| R1\`.
+2. SUBGRAPH & NODE RULES:
+   - Subgraph titles with spaces or parentheses MUST use bracket quotes:
+     e.g. \`subgraph Unbalanced_Tree ["Unbalanced Tree (Skewed)"]\`
+   - Node labels with numbers or parentheses MUST use double quotes:
+     e.g. \`A1["1"]\`, \`Root["(( 10: Root ))"]\`
 
-           - FOR LIFECYCLES / PROCESS STATES / CPU SCHEDULING:
-             MUST use 'stateDiagram-v2' with state transitions.
-             Example:
-             \`\`\`mermaid
-             stateDiagram-v2
-                 [*] --> Ready: Process Spawned
-                 Ready --> Running: CPU Scheduled
-                 Running --> Blocked: I/O Wait
-                 Blocked --> Ready: I/O Complete
-                 Running --> Terminated: Exit
-                 Terminated --> [*]
-             \`\`\`
+3. SELECT THE BEST STANDARD MERMAID TYPE:
+   - For processes, workflows & algorithms: Use standard \`flowchart TD\` or \`flowchart LR\`.
+   - For protocols & communications: Use standard \`sequenceDiagram\`.
+   - For state transitions & lifecycles: Use standard \`stateDiagram-v2\`.
+   - For system structures & relationships: Use standard \`classDiagram\` or \`erDiagram\`.
+   - For trees & graphs: Use standard \`graph TD\` or \`graph LR\`.
 
-           - FOR TREES (BST, AVL, Heap, Trie, Tree Traversal):
-             YOU MUST DRAW THE ACTUAL TREE HIERARCHY using parent-child branching in \`\`\`mermaid (NOT a procedural flowchart):
-             Example:
-             \`\`\`mermaid
-             graph TD
-                 Root["(( 10: Root ))"]
-                 Root --> L1["(( 5: Left ))"]
-                 Root --> R1["(( 15: Right ))"]
-                 L1 --> L2["(( 2 ))"]
-                 L1 --> R2["(( 7 ))"]
-                 R1 --> L3["(( 12 ))"]
-                 R1 --> R3["(( 20 ))"]
-                 style Root fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px
-                 style L1 fill:#065f46,stroke:#10b981,stroke-width:2px
-             \`\`\`
+4. EXPLANATION:
+   - Follow underneath with a concise, clear teacher explanation and step-by-step intuition in plain text.
 
-           - FOR GRAPHS (Dijkstra, BFS/DFS, Shortest Path, MST, Topo Sort):
-             YOU MUST DRAW THE ACTUAL GRAPH TOPOLOGY with vertices and weighted/directed edges:
-             Example:
-             \`\`\`mermaid
-             graph LR
-                 A["(( A [dist: 0] ))"]
-                 B["(( B [dist: 4] ))"]
-                 C["(( C [dist: 2] ))"]
-                 D["(( D [dist: 5] ))"]
-                 A -->|4| B
-                 A -->|2| C
-                 C -->|1| D
-                 C -->|3| B
-                 B -->|1| D
-                 style A fill:#1e3a8a,stroke:#3b82f6
-                 style C fill:#065f46,stroke:#10b981
-                 style D fill:#831843,stroke:#ec4899
-             \`\`\`
-
-           - FOR LINEAR ALGORITHMS (Two Pointers, Binary Search, Sliding Window):
-             Draw the array chain with pointers and highlighted mid/target nodes.
-
-           - THEORY & INTUITION (NO CODE BLOCKS UNLESS ASKED):
-             UNDERNEATH THE DIAGRAM, explain the concept, step-by-step state transitions, node visits, and Big-O complexities. DO NOT output code blocks unless explicitly requested by the user.`;
+Zero errors. Clean, standard Mermaid diagrams enclosed in triple backticks only!`;
     }
 
     const ollamaMessages = [

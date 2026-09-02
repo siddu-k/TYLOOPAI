@@ -27,10 +27,21 @@ export function cleanMermaidCode(raw) {
     }
 
     // If there is trailing explanation text, isolate just the diagram block
-    const trailingTextMatch = cleaned.match(/^([\s\S]*?)(?=\n(?:Teacher Breakdown|Step-by-Step Trace|Key Takeaways|Intuition|Big-O|Complexity|Explanation))/i);
+    const trailingTextMatch = cleaned.match(/^([\s\S]*?)(?=\n(?:Teacher Breakdown|Step-by-Step|The Problem|Key Takeaways|Intuition|Big-O|Complexity|Explanation|Look at the|To understand))/i);
     if (trailingTextMatch) {
         cleaned = trailingTextMatch[1].trim();
     }
+
+    // Auto-fix unquoted subgraph titles with special characters/spaces/parentheses:
+    // e.g. subgraph Unbalanced Tree (Skewed) => subgraph Unbalanced_Tree_Skewed ["Unbalanced Tree (Skewed)"]
+    cleaned = cleaned.replace(/subgraph\s+([^\n\[\]]+)/gi, (match, title) => {
+        const trimmed = title.trim();
+        if (trimmed.includes('["') || trimmed.includes("['") || /^[a-zA-Z0-9_]+$/.test(trimmed)) {
+            return match;
+        }
+        const safeId = trimmed.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'sub';
+        return `subgraph ${safeId} ["${trimmed.replace(/"/g, "'")}"]`;
+    });
 
     // Auto-quote unquoted pipe edge labels: e.g. -->|Blocked (0V)| => -->|"Blocked (0V)"|
     cleaned = cleaned.replace(/\|([^"|\r\n]+)\|/g, (match, inner) => {

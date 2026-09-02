@@ -187,23 +187,42 @@ const useAppStore = create((set, get) => ({
     },
     setInterviewStarted: (started) => set({ interviewStarted: started }),
 
-    startVisualizeMode: (concept = '') => {
+    visualDimension: '2d', // '2d' | '3d'
+    active3DCode: '',
+    setVisualDimension: (dim) => set({ visualDimension: dim }),
+    setActive3DCode: (code) => set({ active3DCode: code }),
+
+    startVisualizeMode: (concept = '', dimension = '2d') => {
         set({
             isVisualizeMode: true,
             isInterviewMode: false,
+            visualDimension: dimension,
             activeConcept: concept,
             activeBoardDiagram: '',
-            activeBoardTitle: concept || 'Teacher Board',
+            active3DCode: '',
+            activeBoardTitle: concept || (dimension === '3d' ? '3D Spatial Studio' : 'Teacher Board'),
             currentPage: 'dashboard',
         });
-        get().createSession(`Visualize: ${concept ? concept.substring(0, 20) + '...' : 'Classroom Board'}`);
+        get().createSession(`${dimension === '3d' ? '3D' : 'Visualize'}: ${concept ? concept.substring(0, 20) + '...' : 'Classroom Board'}`);
     },
     openDiagramOnBoard: (diagramCode, title = 'Diagram from Chat') => {
         set({
             isVisualizeMode: true,
             isInterviewMode: false,
+            visualDimension: '2d',
             activeConcept: '', // Empty to avoid triggering a new Ollama prompt
             activeBoardDiagram: diagramCode,
+            activeBoardTitle: title,
+            currentPage: 'dashboard'
+        });
+    },
+    open3DOnBoard: (threeCode, title = '3D Scene from Chat') => {
+        set({
+            isVisualizeMode: true,
+            isInterviewMode: false,
+            visualDimension: '3d',
+            activeConcept: '',
+            active3DCode: threeCode,
             activeBoardTitle: title,
             currentPage: 'dashboard'
         });
@@ -213,6 +232,7 @@ const useAppStore = create((set, get) => ({
             isVisualizeMode: false,
             activeConcept: '',
             activeBoardDiagram: '',
+            active3DCode: '',
             activeBoardTitle: '',
             currentPage: 'dashboard',
         });

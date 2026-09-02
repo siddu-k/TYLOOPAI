@@ -73,13 +73,113 @@ function MermaidBlock({ code }) {
     );
 }
 
+function SvgBlock({ code }) {
+    const { openDiagramOnBoard } = useAppStore();
+    const [isReplaying, setIsReplaying] = useState(false);
+    const [displaySvg, setDisplaySvg] = useState(code);
+
+    useEffect(() => {
+        setDisplaySvg(code);
+    }, [code]);
+
+    const handleReplay = () => {
+        if (isReplaying) return;
+        setIsReplaying(true);
+
+        const cleanSvg = code.trim();
+        const startTagEnd = cleanSvg.indexOf('>');
+        let currentLength = startTagEnd !== -1 ? startTagEnd + 1 : 20;
+        const totalLength = cleanSvg.length;
+        const totalDuration = 2200;
+        const frameInterval = 25;
+        const totalSteps = totalDuration / frameInterval;
+        const chunkSize = Math.max(12, Math.ceil(totalLength / totalSteps));
+
+        const timer = setInterval(() => {
+            currentLength += chunkSize;
+            if (currentLength >= totalLength) {
+                setDisplaySvg(cleanSvg);
+                setIsReplaying(false);
+                clearInterval(timer);
+            } else {
+                let chunk = cleanSvg.slice(0, currentLength);
+                if (chunk.includes('<svg') && !chunk.includes('</svg>')) {
+                    chunk += '\n</svg>';
+                }
+                setDisplaySvg(chunk);
+            }
+        }, frameInterval);
+    };
+
+    return (
+        <div className="my-3 rounded-2xl border border-emerald-500/30 bg-zinc-950 p-3 relative group shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[11px] font-bold text-emerald-300">2D Vector Schematic</span>
+                    {isReplaying && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                            Re-streaming HTML...
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleReplay}
+                        disabled={isReplaying}
+                        className={`px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-emerald-500/50 text-zinc-300 hover:text-emerald-300 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm ${isReplaying ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        title="Re-stream live SVG code construction"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isReplaying ? 'animate-spin text-emerald-400' : ''}>
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                            <path d="M3 3v5h5"/>
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                            <path d="M16 21h5v-5"/>
+                        </svg>
+                        <span>{isReplaying ? 'Streaming...' : 'Replay Stream'}</span>
+                    </button>
+                    <button
+                        onClick={() => openDiagramOnBoard(code, '2D Vector Schematic')}
+                        className="px-3 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                    >
+                        <span>Open on Blackboard</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div className="relative overflow-hidden bg-black/40 rounded-xl p-2 flex items-center justify-center min-h-[160px]">
+                <div
+                    className="max-h-72 w-full overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-auto transition-all"
+                    dangerouslySetInnerHTML={{ __html: displaySvg }}
+                />
+            </div>
+
+            <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-500">
+                <span className="flex items-center gap-1.5 text-zinc-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>2D Vector • Live Streamed SVG</span>
+                </span>
+                <button
+                    onClick={handleReplay}
+                    disabled={isReplaying}
+                    className="hover:text-emerald-300 text-zinc-400 transition-colors flex items-center gap-1"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Re-stream Code</span>
+                </button>
+            </div>
+        </div>
+    );
+}
+
 import { speak, stopSpeaking } from '../../services/voiceService';
 
 function ensureMermaidFences(text) {
     if (!text) return '';
     if (text.includes('```mermaid')) return text;
 
-    const regex = /(?:^|\n)((?:graph\s+(?:TD|TB|LR|RL|BT)|flowchart\s+(?:TD|TB|LR|RL|BT)|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart|xychart)[\s\S]*?)(?=\n(?:[A-Z0-9#*-]|Teacher Breakdown|Step-by-Step Trace|Key Takeaways|Intuition|Big-O|Complexity|Explanation|\n\n\n|$))/i;
+    const regex = /(?:^|\n)((?:graph\s+(?:TD|TB|LR|RL|BT)|flowchart\s+(?:TD|TB|LR|RL|BT)|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart|xychart)[\s\S]*?)(?=\n(?:[A-Z0-9#*-]|Teacher Breakdown|Step-by-Step|The Problem|Key Takeaways|Intuition|Big-O|Complexity|Explanation|Look at the|To understand|\n\n\n|$))/i;
 
     const match = text.match(regex);
     if (match) {
@@ -92,7 +192,7 @@ function ensureMermaidFences(text) {
 
 export default function ChatMessage({ message, isTyping }) {
     const isUser = message.role === 'user';
-    const { isSpeaking, setIsSpeaking } = useAppStore();
+    const { isSpeaking, setIsSpeaking, openDiagramOnBoard, open3DOnBoard } = useAppStore();
     const [isReadingThis, setIsReadingThis] = useState(false);
     const [copied, setCopied] = useState(false);
     const formattedContent = useMemo(() => isUser ? message.content : ensureMermaidFences(message.content), [message.content, isUser]);
@@ -185,6 +285,44 @@ export default function ChatMessage({ message, isTyping }) {
 
                                             if (!inline && language === 'mermaid') {
                                                 return <MermaidBlock code={codeContent} />;
+                                            }
+
+                                            const isSvgCode = !inline && (language === 'svg' || (codeContent.trim().startsWith('<svg') && codeContent.trim().includes('</svg>')));
+                                            if (isSvgCode) {
+                                                return <SvgBlock code={codeContent} />;
+                                            }
+
+                                            const isThreeJsCode = !inline && (codeContent.includes('THREE.') || codeContent.includes('group.add') || codeContent.includes('createTextSprite'));
+                                            if (isThreeJsCode) {
+                                                return (
+                                                    <div className="my-3 rounded-2xl border border-indigo-500/30 bg-zinc-950/90 p-4 relative group shadow-2xl overflow-hidden">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                                                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                                                        <h4 className="text-sm font-bold text-zinc-100">3D Spatial Scene Generated</h4>
+                                                                    </div>
+                                                                    <p className="text-xs text-zinc-400 mt-0.5">Interactive Three.js 3D model is ready</p>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => open3DOnBoard(codeContent, '3D Spatial Scene')}
+                                                                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white hover:text-black font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                                                            >
+                                                                <span>Open in 3D Viewer</span>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
                                             }
 
                                             return !inline ? (
