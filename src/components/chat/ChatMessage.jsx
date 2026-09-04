@@ -93,9 +93,9 @@ function SvgBlock({ code }) {
         let currentLength = startTagEnd !== -1 ? startTagEnd + 1 : 20;
         const totalLength = cleanSvg.length;
         const totalDuration = 2200;
-        const frameInterval = 25;
+        const frameInterval = 30;
         const totalSteps = totalDuration / frameInterval;
-        const chunkSize = Math.max(12, Math.ceil(totalLength / totalSteps));
+        const chunkSize = Math.max(16, Math.ceil(totalLength / totalSteps));
 
         const timer = setInterval(() => {
             currentLength += chunkSize;
@@ -104,11 +104,25 @@ function SvgBlock({ code }) {
                 setIsReplaying(false);
                 clearInterval(timer);
             } else {
+                // Ensure chunks only break at tag closures ('>') or whitespace to prevent truncated attribute values
                 let chunk = cleanSvg.slice(0, currentLength);
+                const lastCloseTag = chunk.lastIndexOf('>');
+                if (lastCloseTag > 0) {
+                    chunk = chunk.slice(0, lastCloseTag + 1);
+                }
                 if (chunk.includes('<svg') && !chunk.includes('</svg>')) {
                     chunk += '\n</svg>';
                 }
-                setDisplaySvg(chunk);
+                // Verify chunk is valid XML before setting to DOM
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(chunk, 'image/svg+xml');
+                    if (!doc.querySelector('parsererror')) {
+                        setDisplaySvg(chunk);
+                    }
+                } catch (e) {
+                    // Ignore transient chunk parse errors during replay
+                }
             }
         }, frameInterval);
     };
@@ -194,7 +208,7 @@ function ensureMermaidFences(text) {
 
 export default function ChatMessage({ message, isTyping }) {
     const isUser = message.role === 'user';
-    const { isSpeaking, setIsSpeaking, openDiagramOnBoard, open3DOnBoard } = useAppStore();
+    const { isSpeaking, setIsSpeaking, openDiagramOnBoard, open3DOnBoard, startPptMode, startQuizMode } = useAppStore();
     const [isReadingThis, setIsReadingThis] = useState(false);
     const [copied, setCopied] = useState(false);
     const formattedContent = useMemo(() => isUser ? message.content : ensureMermaidFences(message.content), [message.content, isUser]);
@@ -295,6 +309,91 @@ export default function ChatMessage({ message, isTyping }) {
                                                 return <SvgBlock code={codeContent} />;
                                             }
 
+                                            // AI Slide Deck Presentation Block
+                                            const isPptDeckBlock = !inline && (language === 'json:ppt-deck' || (language === 'json' && codeContent.includes('"slides"') && codeContent.includes('"slideNumber"')));
+                                            if (isPptDeckBlock) {
+                                                let parsedDeck = null;
+                                                try {
+                                                    parsedDeck = JSON.parse(codeContent);
+                                                } catch (e) {
+                                                    // fallback to raw json block if parsing fails
+                                                }
+
+                                                if (parsedDeck) {
+                                                    return (
+                                                        <div className="my-3 rounded-2xl border border-emerald-500/30 bg-zinc-950/90 p-4 relative group shadow-2xl overflow-hidden">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                            <rect width="18" height="14" x="3" y="3" rx="2" />
+                                                                            <path d="M7 21h10" />
+                                                                            <path d="M12 17v4" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                                                            <h4 className="text-sm font-bold text-zinc-100">{parsedDeck.topic || parsedDeck.title || 'Slide Deck Ready'}</h4>
+                                                                        </div>
+                                                                        <p className="text-xs text-zinc-400 mt-0.5">{parsedDeck.slides?.length || 0} slides • Visual Diagrams Included</p>
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => startPptMode(parsedDeck)}
+                                                                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                                                                >
+                                                                    <span>Launch Slide Studio</span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                            }
+
+                                            // AI Quiz Assessment Block
+                                            const isQuizDataBlock = !inline && (language === 'json:quiz-data' || (language === 'json' && codeContent.includes('"questions"') && codeContent.includes('"correctAnswerIndex"')));
+                                            if (isQuizDataBlock) {
+                                                let parsedQuiz = null;
+                                                try {
+                                                    parsedQuiz = JSON.parse(codeContent);
+                                                } catch (e) {
+                                                    // fallback
+                                                }
+
+                                                if (parsedQuiz) {
+                                                    return (
+                                                        <div className="my-3 rounded-2xl border border-amber-500/30 bg-zinc-950/90 p-4 relative group shadow-2xl overflow-hidden">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                            <circle cx="12" cy="12" r="10" />
+                                                                            <path d="m9 12 2 2 4-4" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                                                            <h4 className="text-sm font-bold text-zinc-100">{parsedQuiz.title || parsedQuiz.topic || 'Assessment Quiz Ready'}</h4>
+                                                                        </div>
+                                                                        <p className="text-xs text-zinc-400 mt-0.5">{parsedQuiz.questions?.length || 0} Questions • {parsedQuiz.difficulty || 'Standard'} Rigor</p>
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => startQuizMode(parsedQuiz)}
+                                                                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                                                                >
+                                                                    <span>Take Quiz Now</span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                            }
+
                                             const isThreeJsCode = !inline && (codeContent.includes('THREE.') || codeContent.includes('group.add') || codeContent.includes('createTextSprite'));
                                             if (isThreeJsCode) {
                                                 return (
@@ -329,16 +428,20 @@ export default function ChatMessage({ message, isTyping }) {
                                             }
 
                                             return !inline ? (
-                                                <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-300 overflow-x-auto my-2">
-                                                    <code className={className} {...props}>
-                                                        {children}
-                                                    </code>
-                                                </pre>
+                                                <code className={`block p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-300 overflow-x-auto my-2 whitespace-pre ${className || ''}`} {...props}>
+                                                    {children}
+                                                </code>
                                             ) : (
                                                 <code className="px-1.5 py-0.5 bg-zinc-800 text-zinc-200 rounded text-xs font-mono" {...props}>
                                                     {children}
                                                 </code>
                                             );
+                                        },
+                                        pre({ children }) {
+                                            return <div className="my-2">{children}</div>;
+                                        },
+                                        p({ children }) {
+                                            return <div className="mb-2 leading-relaxed last:mb-0">{children}</div>;
                                         }
                                     }}
                                 >

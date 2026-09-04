@@ -11,21 +11,22 @@ import PptLiveChat from './PptLiveChat';
 function SlideMarkdown({ content, className = '' }) {
     if (!content) return null;
     return (
-        <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            className={`slide-markdown inline-block ${className}`}
-            components={{
-                p: ({ children }) => <span>{children}</span>,
-                code: ({ children }) => (
-                    <code className="px-1.5 py-0.5 bg-zinc-800/80 text-emerald-300 font-mono text-[11px] rounded border border-zinc-700/50">
-                        {children}
-                    </code>
-                )
-            }}
-        >
-            {content}
-        </ReactMarkdown>
+        <span className={`slide-markdown inline-block ${className}`}>
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+                components={{
+                    p: ({ children }) => <span>{children}</span>,
+                    code: ({ children }) => (
+                        <code className="px-1.5 py-0.5 bg-zinc-800/80 text-emerald-300 font-mono text-[11px] rounded border border-zinc-700/50">
+                            {children}
+                        </code>
+                    )
+                }}
+            >
+                {content}
+            </ReactMarkdown>
+        </span>
     );
 }
 

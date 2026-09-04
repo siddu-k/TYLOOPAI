@@ -86,10 +86,22 @@ export default function MermaidBoard() {
                 clearInterval(timer);
             } else {
                 let chunk = cleanSvg.slice(0, currentLength);
+                const lastCloseTag = chunk.lastIndexOf('>');
+                if (lastCloseTag > 0) {
+                    chunk = chunk.slice(0, lastCloseTag + 1);
+                }
                 if (chunk.includes('<svg') && !chunk.includes('</svg>')) {
                     chunk += '\n</svg>';
                 }
-                setStreamedSvg(chunk);
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(chunk, 'image/svg+xml');
+                    if (!doc.querySelector('parsererror')) {
+                        setStreamedSvg(chunk);
+                    }
+                } catch (e) {
+                    // Ignore transient parsing errors during streaming animation
+                }
             }
         }, frameInterval);
     };
@@ -178,8 +190,8 @@ export default function MermaidBoard() {
 
         const handleNonPassiveWheel = (e) => {
             e.preventDefault();
-            const factor = e.deltaY < 0 ? 1.15 : 0.87;
-            setZoom(currentZoom => Math.min(10.0, Math.max(0.1, Number((currentZoom * factor).toFixed(2)))));
+            const factor = e.deltaY < 0 ? 1.18 : 0.85;
+            setZoom(currentZoom => Math.min(30.0, Math.max(0.05, Number((currentZoom * factor).toFixed(2)))));
         };
 
         container.addEventListener('wheel', handleNonPassiveWheel, { passive: false });
@@ -194,11 +206,11 @@ export default function MermaidBoard() {
     };
 
     const handleZoomIn = () => {
-        setZoom(z => Math.min(10.0, Number((z * 1.25).toFixed(2))));
+        setZoom(z => Math.min(30.0, Number((z * 1.35).toFixed(2))));
     };
 
     const handleZoomOut = () => {
-        setZoom(z => Math.max(0.1, Number((z * 0.8).toFixed(2))));
+        setZoom(z => Math.max(0.05, Number((z * 0.75).toFixed(2))));
     };
 
     const handleFitView = () => {
@@ -214,6 +226,35 @@ export default function MermaidBoard() {
         }
     };
 
+    // Fullscreen Escape Key Listener & HTML5 Fullscreen Sync
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullscreen]);
+
+    const toggleFullscreen = () => {
+        const next = !isFullscreen;
+        setIsFullscreen(next);
+        if (next) {
+            // Attempt native browser fullscreen if supported
+            if (containerRef.current?.parentElement && !document.fullscreenElement) {
+                containerRef.current.parentElement.requestFullscreen?.().catch(() => {});
+            }
+        } else {
+            if (document.fullscreenElement) {
+                document.exitFullscreen?.().catch(() => {});
+            }
+        }
+    };
+
     const themeStyles = {
         chalkboard: 'bg-[#0e1310] border-emerald-900/40 text-emerald-100',
         obsidian: 'bg-[#09090b] border-zinc-800 text-zinc-100',
@@ -221,7 +262,7 @@ export default function MermaidBoard() {
     };
 
     return (
-        <div className={`relative flex flex-col h-full w-full rounded-3xl overflow-hidden border shadow-2xl transition-all duration-300 ${themeStyles[boardTheme]} ${isFullscreen ? 'fixed inset-4 z-50 rounded-2xl' : ''}`}>
+        <div className={`relative flex flex-col h-full w-full rounded-3xl overflow-hidden border shadow-2xl transition-all duration-300 ${themeStyles[boardTheme]} ${isFullscreen ? '!fixed !inset-0 !z-[9999] !w-screen !h-screen !rounded-none !border-none' : ''}`}>
             {/* Whiteboard Top Toolbar */}
             <header className={`px-5 py-2.5 flex items-center justify-end border-b transition-colors ${boardTheme === 'white' ? 'border-zinc-200 bg-zinc-50/90' : 'border-white/10 bg-black/30'} backdrop-blur-md z-10 flex-shrink-0`}>
                 {/* Toolbar Controls */}
@@ -253,7 +294,7 @@ export default function MermaidBoard() {
                         <button
                             onClick={handleZoomOut}
                             className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                            title="Zoom Out (Min 10%)"
+                            title="Zoom Out (Min 5%)"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
                         </button>
@@ -267,7 +308,7 @@ export default function MermaidBoard() {
                         <button
                             onClick={handleZoomIn}
                             className="p-1.5 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                            title="Zoom In (Max 1000%)"
+                            title="Zoom In (Max 3000%)"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
                         </button>
@@ -314,9 +355,9 @@ export default function MermaidBoard() {
 
                     {/* Fullscreen Toggle */}
                     <button
-                        onClick={() => setIsFullscreen(!isFullscreen)}
-                        className="p-1.5 bg-black/40 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 rounded-xl transition-colors"
-                        title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                        onClick={toggleFullscreen}
+                        className={`p-1.5 border rounded-xl transition-all ${isFullscreen ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-lg' : 'bg-black/40 hover:bg-white/10 text-zinc-400 hover:text-white border-white/10'}`}
+                        title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Open Diagram in Fullscreen'}
                     >
                         {isFullscreen ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
@@ -393,11 +434,12 @@ export default function MermaidBoard() {
                 )}
 
                 {svgContent ? (
-                    <div className="relative w-full min-h-full flex items-center justify-center">
+                    <div className="relative w-full min-h-full flex items-center justify-center pointer-events-none">
                         <div
-                            className={`transition-transform duration-75 ease-out origin-center flex items-center justify-center will-change-transform max-w-none w-full min-h-full p-6 [&>svg]:max-w-[95%] [&>svg]:h-auto [&>svg]:drop-shadow-[0_20px_50px_rgba(0,0,0,0.7)] ${boardTheme === 'white' ? 'filter invert hue-rotate-180 brightness-95 contrast-125' : ''}`}
+                            className={`origin-center flex items-center justify-center max-w-none w-full min-h-full p-6 [&>svg]:max-w-[95%] [&>svg]:h-auto ${boardTheme === 'white' ? 'filter invert hue-rotate-180 brightness-95' : ''}`}
                             style={{
-                                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
+                                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                                transformOrigin: 'center center'
                             }}
                             dangerouslySetInnerHTML={{ __html: streamedSvg || svgContent }}
                         />

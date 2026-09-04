@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 // ── 6 High-Quality Technical & Healthcare Diagram SVG Textures (400x250) ──
 const DIAGRAM_SVGS = [
-  // 1. Medical ECG & Cardiac Telemetry Blueprint
+  // 1. Quicksort & Divide-and-Conquer Sorting Theory
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="400" height="250">
     <defs>
       <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -23,32 +23,50 @@ const DIAGRAM_SVGS = [
     <rect x="1" y="1" width="398" height="248" fill="none" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1.5" rx="14" />
     
     <!-- Header -->
-    <text x="24" y="34" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" letter-spacing="1">CARDIAC TELEMETRY • V-12 LEAD</text>
-    <rect x="300" y="22" width="76" height="18" rx="4" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="1" />
-    <text x="338" y="34" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">NORMAL SINUS</text>
+    <text x="24" y="34" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" letter-spacing="1">QUICKSORT • DIVIDE &amp; CONQUER</text>
+    <rect x="290" y="22" width="86" height="18" rx="4" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="1" />
+    <text x="333" y="34" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">O(N log N)</text>
     
-    <!-- Heart Chamber Vector Wireframe -->
-    <g transform="translate(42, 65) scale(0.65)" stroke="#38bdf8" stroke-width="1.5" fill="none" opacity="0.85">
-      <path d="M60,30 C60,10 30,10 30,40 C30,70 60,95 60,95 C60,95 90,70 90,40 C90,10 60,10 60,30 Z" stroke="rgba(56,189,248,0.4)" stroke-dasharray="3 3"/>
-      <circle cx="60" cy="45" r="12" stroke="#10b981" stroke-width="2" />
-      <line x1="60" y1="10" x2="60" y2="85" stroke="rgba(56,189,248,0.5)" stroke-width="1.5" />
-      <line x1="30" y1="45" x2="90" y2="45" stroke="rgba(56,189,248,0.5)" stroke-width="1.5" />
-      <text x="60" y="115" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="12" text-anchor="middle">AORTIC FLOW</text>
+    <!-- Sorting Array Visualization Bars -->
+    <g transform="translate(30, 60)">
+      <rect x="10" y="70" width="22" height="50" rx="3" fill="#0284c7" />
+      <text x="21" y="62" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">24</text>
+      
+      <rect x="42" y="30" width="22" height="90" rx="3" fill="#0284c7" />
+      <text x="53" y="22" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">68</text>
+      
+      <rect x="74" y="85" width="22" height="35" rx="3" fill="#0284c7" />
+      <text x="85" y="77" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">12</text>
+      
+      <!-- Pivot Element -->
+      <rect x="106" y="50" width="22" height="70" rx="3" fill="#10b981" stroke="#34d399" stroke-width="1.5" />
+      <text x="117" y="42" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">PIVOT</text>
+      
+      <rect x="138" y="15" width="22" height="105" rx="3" fill="#0284c7" />
+      <text x="149" y="8" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">92</text>
+      
+      <rect x="170" y="40" width="22" height="80" rx="3" fill="#0284c7" />
+      <text x="181" y="32" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">55</text>
+      
+      <rect x="202" y="60" width="22" height="60" rx="3" fill="#0284c7" />
+      <text x="213" y="52" fill="#7dd3fc" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">41</text>
+      
+      <!-- Pointer Arrows -->
+      <path d="M 21 130 L 21 142 M 18 134 L 21 130 L 24 134" stroke="#f59e0b" stroke-width="1.5" fill="none" />
+      <text x="21" y="155" fill="#f59e0b" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">i</text>
+      
+      <path d="M 213 130 L 213 142 M 210 134 L 213 130 L 216 134" stroke="#ec4899" stroke-width="1.5" fill="none" />
+      <text x="213" y="155" fill="#ec4899" font-family="'JetBrains Mono', monospace" font-size="9" text-anchor="middle">j</text>
     </g>
 
-    <!-- ECG Waveform -->
-    <path d="M 125 125 L 155 125 L 165 110 L 175 125 L 185 125 L 195 70 L 205 160 L 215 125 L 230 125 L 245 105 L 260 125 L 375 125" fill="none" stroke="url(#beamGrad1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-    <circle cx="195" cy="70" r="4" fill="#38bdf8" />
-    <text x="195" y="60" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" text-anchor="middle">R-PEAK 1.2mV</text>
-
-    <!-- Metrics Footer -->
+    <!-- Metrics / Theory Footer -->
     <g transform="translate(24, 195)">
-      <text x="0" y="14" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="9">HEART RATE</text>
-      <text x="0" y="32" fill="#fafafa" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="800">72 <tspan font-size="10" fill="#10b981">BPM</tspan></text>
-      <text x="110" y="14" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="9">O2 SATURATION</text>
-      <text x="110" y="32" fill="#fafafa" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="800">99 <tspan font-size="10" fill="#38bdf8">%</tspan></text>
-      <text x="230" y="14" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="9">Q-T INTERVAL</text>
-      <text x="230" y="32" fill="#fafafa" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="800">410 <tspan font-size="10" fill="#818cf8">ms</tspan></text>
+      <text x="0" y="14" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="9">BEST CASE</text>
+      <text x="0" y="32" fill="#fafafa" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="800">Ω(N log N)</text>
+      <text x="115" y="14" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="9">AVERAGE</text>
+      <text x="115" y="32" fill="#fafafa" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="800">Θ(N log N)</text>
+      <text x="230" y="14" fill="#a1a1aa" font-family="'JetBrains Mono', monospace" font-size="9">SPACE COMPLEXITY</text>
+      <text x="230" y="32" fill="#fafafa" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="800">O(log N)</text>
     </g>
   </svg>`,
 

@@ -71,9 +71,22 @@ export default function Sidebar() {
                                             : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-50'
                                             }`}
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-40">
-                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                        </svg>
+                                        {session.quiz || session.title?.startsWith('Quiz:') ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-amber-400">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <path d="m9 12 2 2 4-4" />
+                                            </svg>
+                                        ) : session.pptDeck || session.title?.startsWith('Deck:') ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-emerald-400">
+                                                <rect width="18" height="14" x="3" y="3" rx="2" />
+                                                <path d="M7 21h10" />
+                                                <path d="M12 17v4" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-40">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                            </svg>
+                                        )}
                                         <span className="truncate flex-1">{session.title}</span>
                                         <span className="text-[10px] opacity-30 shrink-0 group-hover:hidden">
                                             {new Date(session.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -124,10 +137,17 @@ export default function Sidebar() {
                                 <span>3D Spatial Studio</span>
                             </button>
                             <button
+                                onClick={() => setCurrentPage('quiz')}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-50 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
+                                <span>AI Assessment & Quiz</span>
+                            </button>
+                            <button
                                 onClick={() => setCurrentPage('ppt')}
                                 className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-50 transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="14" x="3" y="3" rx="2" /><path d="M7 21h10" /><path d="M12 17v4" /><path d="m9 9 6 3-6 3Z" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><rect width="18" height="14" x="3" y="3" rx="2" /><path d="M7 21h10" /><path d="M12 17v4" /><path d="m9 9 6 3-6 3Z" /></svg>
                                 <span>AI Slide Deck Studio</span>
                             </button>
                             <button

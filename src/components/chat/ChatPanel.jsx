@@ -442,7 +442,7 @@ export default function ChatPanel() {
                                     'Mock interview: React Developer',
                                     'Explain neural networks simply',
                                     'Python script to scrape data',
-                                    'Quiz me on modern history'
+                                    'Quiz: Distributed Systems & Raft Consensus'
                                 ].map((text, i) => (
                                     <button key={i} onClick={() => handleSend(text)} className="px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-50 transition-all text-left">
                                         {text}

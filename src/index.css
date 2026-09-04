@@ -89,6 +89,8 @@ textarea {
 svg[id^="mermaid-"],
 svg[id^="mermaid-"] g {
   overflow: visible !important;
+  shape-rendering: geometricPrecision !important;
+  text-rendering: geometricPrecision !important;
 }
 
 svg[id^="mermaid-"] text,
@@ -101,10 +103,12 @@ svg[id^="mermaid-"] span {
   white-space: normal !important;
   word-break: break-word !important;
   text-overflow: unset !important;
+  -webkit-font-smoothing: subpixel-antialiased !important;
 }
 
 svg[id^="mermaid-"] foreignObject {
   overflow: visible !important;
+  transform: translateZ(0);
 }
 
 svg[id^="mermaid-"] foreignObject > div {
@@ -114,6 +118,14 @@ svg[id^="mermaid-"] foreignObject > div {
   justify-content: center !important;
   text-align: center !important;
   overflow: visible !important;
+  -webkit-font-smoothing: antialiased !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+svg[id^="mermaid-"] .edgeLabel {
+  background-color: #18181b !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
 }
 
 svg[id^="mermaid-"] .node rect,
@@ -699,6 +711,51 @@ body,
 
 .landing-name-header {
   margin-bottom: 1.75rem;
+}
+
+.landing-badge-transform {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.6rem;
+  background: rgba(12, 12, 16, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.badge-theory-strikethrough {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #71717a;
+  text-decoration: line-through;
+  text-decoration-color: #ef4444;
+  text-decoration-thickness: 3px;
+  opacity: 0.75;
+}
+
+.badge-arrow-icon {
+  color: #a1a1aa;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.badge-visualize-glow {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #06b6d4 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.65));
 }
 
 .landing-name-icon-box {

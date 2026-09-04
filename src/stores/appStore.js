@@ -161,6 +161,30 @@ const useAppStore = create((set, get) => ({
         // Clear messages immediately to avoid bleeding before loading new ones
         set({ currentSession: session, messages: [] });
         get().loadSessionMessages(session.id);
+
+        // If this session is a slide deck session, restore active deck
+        if (session.pptDeck) {
+            set({
+                activePptDeck: session.pptDeck,
+                isPptMode: true,
+                isQuizMode: false,
+                isVisualizeMode: false,
+                isInterviewMode: false,
+                currentSlideIndex: 0
+            });
+            saveStorage('tyloop_active_ppt', session.pptDeck);
+        } else if (session.quiz) {
+            set({
+                activeQuiz: session.quiz,
+                isQuizMode: true,
+                isPptMode: false,
+                isVisualizeMode: false,
+                isInterviewMode: false,
+                quizUserAnswers: {},
+                quizSubmitted: false
+            });
+            saveStorage('tyloop_active_quiz', session.quiz);
+        }
     },
     setMessages: (messages) => set({ messages }),
     setIsAiTyping: (typing) => set({ isAiTyping: typing }),
@@ -263,7 +287,27 @@ const useAppStore = create((set, get) => ({
         if (deck) {
             saveStorage('tyloop_active_ppt', deck);
             const title = deck.topic || deck.title || 'Presentation';
-            get().createSession(`Deck: ${title.substring(0, 24)}`);
+            
+            // Create a dedicated chat session for this slide deck
+            const newSession = get().createSession(`Deck: ${title.substring(0, 24)}`);
+            newSession.pptDeck = deck;
+            
+            // Update session in sessions list with pptDeck metadata
+            set((state) => {
+                const updatedSessions = state.sessions.map(s => s.id === newSession.id ? { ...s, pptDeck: deck } : s);
+                saveStorage('tyloop_sessions', updatedSessions);
+                return { sessions: updatedSessions, currentSession: { ...newSession, pptDeck: deck } };
+            });
+
+            // Save slide deck summary as the initial assistant message in this session's history
+            const summaryMessage = {
+                id: crypto.randomUUID(),
+                session_id: newSession.id,
+                role: 'assistant',
+                content: `### 📊 AI Slide Deck: **${title}**\n*Theme: ${deck.theme || 'Modern'} • ${deck.slides?.length || 0} Visual Slides Generated*\n\n${deck.slides?.map((s, idx) => `${idx + 1}. **${s.title}**${s.subtitle ? ` — *${s.subtitle}*` : ''}`).join('\n')}\n\n\`\`\`json:ppt-deck\n${JSON.stringify(deck, null, 2)}\n\`\`\``,
+                created_at: new Date().toISOString()
+            };
+            get().addMessage(summaryMessage);
         }
     },
     exitPptMode: () => {
@@ -276,9 +320,83 @@ const useAppStore = create((set, get) => ({
     setActivePptDeck: (deck) => {
         set({ activePptDeck: deck });
         saveStorage('tyloop_active_ppt', deck);
+
+        // Also sync with current session if active
+        const curr = get().currentSession;
+        if (curr) {
+            set((state) => {
+                const updated = state.sessions.map(s => s.id === curr.id ? { ...s, pptDeck: deck } : s);
+                saveStorage('tyloop_sessions', updated);
+                return { sessions: updated, currentSession: { ...curr, pptDeck: deck } };
+            });
+        }
     },
     setCurrentSlideIndex: (idx) => set({ currentSlideIndex: idx }),
     setIsPptPresenting: (val) => set({ isPptPresenting: val }),
+
+    // ─── AI Quiz Mode ───
+    isQuizMode: false,
+    activeQuiz: loadStorage('tyloop_active_quiz', null),
+    quizUserAnswers: {}, // { [questionIndex]: selectedOptionIndex }
+    quizSubmitted: false,
+
+    startQuizMode: (quiz) => {
+        set({
+            isQuizMode: true,
+            isPptMode: false,
+            isInterviewMode: false,
+            isVisualizeMode: false,
+            activeQuiz: quiz,
+            quizUserAnswers: {},
+            quizSubmitted: false,
+            currentPage: 'dashboard'
+        });
+        if (quiz) {
+            saveStorage('tyloop_active_quiz', quiz);
+            const topic = quiz.topic || quiz.title || 'Technical Assessment';
+            
+            // Create a dedicated chat session for this quiz
+            const newSession = get().createSession(`Quiz: ${topic.substring(0, 24)}`);
+            newSession.quiz = quiz;
+
+            // Update session in sessions list with quiz metadata
+            set((state) => {
+                const updatedSessions = state.sessions.map(s => s.id === newSession.id ? { ...s, quiz } : s);
+                saveStorage('tyloop_sessions', updatedSessions);
+                return { sessions: updatedSessions, currentSession: { ...newSession, quiz } };
+            });
+
+            // Save quiz summary message into session history
+            const summaryMessage = {
+                id: crypto.randomUUID(),
+                session_id: newSession.id,
+                role: 'assistant',
+                content: `### 🎯 AI Assessment Quiz: **${quiz.title || topic}**\n*Difficulty: ${quiz.difficulty || 'Medium'} • ${quiz.questions?.length || 0} Questions*\n\n${quiz.questions?.map((q, idx) => `**Q${idx + 1}.** ${q.question}`).join('\n\n')}\n\n\`\`\`json:quiz-data\n${JSON.stringify(quiz, null, 2)}\n\`\`\``,
+                created_at: new Date().toISOString()
+            };
+            get().addMessage(summaryMessage);
+        }
+    },
+    exitQuizMode: () => {
+        set({
+            isQuizMode: false,
+            currentPage: 'dashboard'
+        });
+    },
+    selectQuizAnswer: (questionIndex, optionIndex) => {
+        set((state) => ({
+            quizUserAnswers: {
+                ...state.quizUserAnswers,
+                [questionIndex]: optionIndex
+            }
+        }));
+    },
+    submitQuiz: () => {
+        set({ quizSubmitted: true });
+    },
+    resetQuiz: () => {
+        set({ quizUserAnswers: {}, quizSubmitted: false });
+    },
 
     updateCurrentSlide: (slideUpdates) => {
         set((state) => {

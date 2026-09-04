@@ -1,8 +1,19 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
 import useAppStore from '../../stores/appStore.js';
 import StateHUD from './StateHUD.jsx';
+
+// Create an extensible THREE proxy for generated scripts (ES modules are non-extensible)
+const threeExtended = new Proxy(THREE, {
+  get(target, prop) {
+    if (prop === 'ParametricGeometry') {
+      return ParametricGeometry;
+    }
+    return target[prop];
+  }
+});
 
 /**
  * CanvasEngine3D — Interactive Multi-Dimensional 3D Spatial Canvas Engine
@@ -165,7 +176,7 @@ export default function CanvasEngine3D({ code: propCode }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(new THREE.Color(bgColor), 1.0);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     container.innerHTML = '';
@@ -257,10 +268,12 @@ export default function CanvasEngine3D({ code: propCode }) {
     }
 
     // 8. Animation Loop with Kinematic Play/Pause & Speed Handling
-    let clock = new THREE.Clock();
+    let prevTime = performance.now();
     const animate = () => {
       animFrameIdRef.current = requestAnimationFrame(animate);
-      const rawDelta = clock.getDelta();
+      const currentTime = performance.now();
+      const rawDelta = Math.min((currentTime - prevTime) / 1000, 0.1);
+      prevTime = currentTime;
       const delta = isPaused ? 0 : rawDelta * animSpeed;
       elapsedTimeRef.current += delta;
       const time = elapsedTimeRef.current;
@@ -1310,6 +1323,8 @@ export default function CanvasEngine3D({ code: propCode }) {
         'createTextSprite',
         'onAnimate',
         'wireframe',
+        'camera',
+        'controls',
         `
         try {
           ${cleanCode}
@@ -1319,7 +1334,7 @@ export default function CanvasEngine3D({ code: propCode }) {
       `
       );
 
-      runFn(THREE, sceneRef.current, group, createTextSprite, onAnimate, wireframe);
+      runFn(threeExtended, sceneRef.current, group, createTextSprite, onAnimate, wireframe, cameraRef.current, controlsRef.current);
     } catch (err) {
       console.warn('Failed to compile 3D script:', err);
       buildDemoScene(group);

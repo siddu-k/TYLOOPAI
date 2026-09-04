@@ -17,7 +17,7 @@ export function DoctorAvatar(props) {
         return rawAnimations.map((clip) => {
             const filteredTracks = clip.tracks.filter((track) => {
                 const nodeName = track.name.split('.')[0];
-                return !!scene.getObjectByName(nodeName) || !!nodes[nodeName];
+                return nodeName !== 'Armature' && (!!scene.getObjectByName(nodeName) || !!nodes[nodeName]);
             });
             const cleanClip = clip.clone();
             cleanClip.tracks = filteredTracks;

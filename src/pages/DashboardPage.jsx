@@ -13,6 +13,8 @@ import Visualize3DSetup from '../components/visualize/Visualize3DSetup';
 import AvatarCustomizerModal from '../components/avatar/AvatarCustomizerModal';
 import PptSetupModal from '../components/ppt/PptSetupModal';
 import PptDeckViewer from '../components/ppt/PptDeckViewer';
+import QuizSetupModal from '../components/quiz/QuizSetupModal';
+import QuizViewer from '../components/quiz/QuizViewer';
 
 function ResizeDivider({ onMouseDown }) {
     return (
@@ -36,6 +38,7 @@ export default function DashboardPage() {
         isVisualizeMode, exitVisualizeMode, activeBoardTitle,
         visualDimension, setVisualDimension, active3DCode,
         isPptMode, exitPptMode, activePptDeck,
+        isQuizMode, exitQuizMode, activeQuiz,
         currentPage, setCurrentPage, interviewStarted,
         isListening, isAiTyping, isSpeaking, isAvatarEnabled
     } = useAppStore();
@@ -146,7 +149,7 @@ export default function DashboardPage() {
         fetchSessions();
     }, []);
 
-    const isSpecialStage = isInterviewMode || isVisualizeMode || isPptMode;
+    const isSpecialStage = isInterviewMode || isVisualizeMode || isPptMode || isQuizMode;
 
     return (
         <div className="h-full w-full flex overflow-hidden bg-[#09090b] text-zinc-50">
@@ -155,7 +158,12 @@ export default function DashboardPage() {
 
             <div className="flex-1 flex min-w-0 h-full relative">
 
-                {isPptMode ? (
+                {isQuizMode ? (
+                    // ─── AI ASSESSMENT & QUIZ STUDIO (QUIZ MODE) ───
+                    <div className="flex-1 flex h-full overflow-hidden animate-in fade-in duration-500">
+                        <QuizViewer />
+                    </div>
+                ) : isPptMode ? (
                     // ─── AI SLIDE DECK STUDIO (PPT MODE) ───
                     <div className="flex-1 flex h-full overflow-hidden animate-in fade-in duration-500">
                         <PptDeckViewer />
@@ -229,7 +237,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Live 2D Board or 3D Spatial Canvas */}
-                            <div className="flex-1 min-h-0 relative rounded-2xl overflow-hidden border border-zinc-800/80 bg-zinc-950">
+                            <div className="flex-1 min-h-0 relative rounded-2xl border border-zinc-800/80 bg-zinc-950">
                                 {visualDimension === '3d' ? (
                                     <CanvasEngine3D code={active3DCode} />
                                 ) : (
@@ -413,6 +421,9 @@ export default function DashboardPage() {
                 isOpen={isCustomizerOpen}
                 onClose={() => setIsCustomizerOpen(false)}
             />
+            {currentPage === 'quiz' && (
+                <QuizSetupModal onClose={() => setCurrentPage('dashboard')} />
+            )}
             {currentPage === 'ppt' && (
                 <PptSetupModal onClose={() => setCurrentPage('dashboard')} />
             )}

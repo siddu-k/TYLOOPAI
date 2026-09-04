@@ -24,19 +24,7 @@ export function extractMermaidDiagram(markdown) {
         return svgMatch[1].trim();
     }
 
-    // 0b. In-progress streamed SVG block
-    const streamSvgMatch = markdown.match(/```(?:svg|xml)?\s*(<svg[\s\S]*)$/i);
-    if (streamSvgMatch) {
-        let candidate = streamSvgMatch[1].trim();
-        if (candidate.startsWith('<svg')) {
-            if (!candidate.includes('</svg>')) {
-                candidate += '\n</svg>';
-            }
-            return candidate;
-        }
-    }
-
-    // 0c. Standalone raw SVG block without code fences
+    // 0b. Standalone completed raw SVG block without code fences
     const rawSvgMatch = markdown.match(/<svg[\s\S]*?<\/svg>/i);
     if (rawSvgMatch) {
         return rawSvgMatch[0].trim();
@@ -78,7 +66,13 @@ export function extractMermaidDiagram(markdown) {
 export async function streamChat(messages, onToken, signal, model = null, modeData = null) {
     let systemPrompt = SYSTEM_PROMPT;
 
-    if (modeData?.isInterviewMode) {
+    if (modeData?.systemPrompt) {
+        systemPrompt = modeData.systemPrompt;
+    } else if (modeData?.isQuizMode) {
+        systemPrompt = `You are a Senior Principal Examiner and Lead Assessor.
+Generate the exact number of multiple-choice quiz questions requested by the user.
+OUTPUT MUST BE STRICTLY A VALID JSON OBJECT without any surrounding text or markdown outside the \`\`\`json block.`;
+    } else if (modeData?.isInterviewMode) {
         systemPrompt = `You are Tyloop, a world-class professional Lead Interviewer at Tyloop AI.
         CONTEXT: You are interviewing a candidate for the following role/description: ${modeData.jobDescription}
         

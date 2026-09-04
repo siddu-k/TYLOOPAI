@@ -59,13 +59,13 @@ export default function LandingPage() {
         {/* User Name Input Card */}
         <div className="landing-name-card" data-shape-mask>
           <div className="landing-name-header">
-            <div className="landing-name-icon-box">
-              <div className="landing-name-icon-ring">
-                <div className="landing-name-icon-dot" />
-              </div>
+            <div className="landing-badge-transform">
+              <span className="badge-theory-strikethrough">THEORY</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="badge-arrow-icon"><line x1="4" y1="12" x2="20" y2="12"/><polyline points="13 5 20 12 13 19"/></svg>
+              <span className="badge-visualize-glow">VISUALIZE</span>
             </div>
             <h1 className="landing-name-title">Welcome to Tyloop AI</h1>
-            <p className="landing-name-subtitle">Let's get started. What should I call you?</p>
+            <p className="landing-name-subtitle">Don't just read theory. Visualize, interact, and master concepts.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="landing-name-form">
