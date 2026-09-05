@@ -71,47 +71,35 @@ function MermaidBlock({ code }) {
     }
 
     return (
-        <div className="my-3 rounded-2xl overflow-hidden border border-emerald-500/20 bg-zinc-950/80 shadow-xl group">
-            <div className="px-3 py-2 bg-zinc-900/60 border-b border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Flowchart / Diagram</span>
+        <div className="my-2 rounded-xl overflow-hidden border border-emerald-500/20 bg-zinc-950/80 shadow-md group">
+            <div className="px-2.5 py-1.5 bg-zinc-900/70 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider whitespace-nowrap">Flowchart / Diagram</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto flex-wrap">
                     <button
                         onClick={() => requestDiagramTheory(clean, 'Flowchart / Diagram')}
-                        className="text-[11px] font-bold text-blue-300 hover:text-white px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded-lg transition-all flex items-center gap-1.5 shadow-sm"
+                        className="text-[10px] font-semibold text-blue-300 hover:text-white px-2 py-0.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded transition-all flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap"
                         title="Generate in-depth technical theory for this exact diagram"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                         <span>Theory</span>
                     </button>
                     <button
                         onClick={handleSendToBoard}
-                        className="text-[10px] font-semibold text-zinc-400 hover:text-white px-2 py-1 bg-zinc-800 hover:bg-emerald-950 hover:border-emerald-700/50 border border-zinc-700 rounded-lg transition-all flex items-center gap-1"
+                        className="text-[10px] font-semibold text-zinc-300 hover:text-white px-2 py-0.5 bg-zinc-800/90 hover:bg-emerald-950 hover:border-emerald-700/50 border border-zinc-700 rounded transition-all flex items-center gap-1 shrink-0 whitespace-nowrap"
                         title="View on Blackboard"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
-                        <span>Open on Board</span>
+                        <span>Blackboard</span>
                     </button>
                 </div>
             </div>
             <div
-                className="p-4 flex items-center justify-center overflow-x-auto select-none"
+                className="p-2.5 flex items-center justify-center overflow-x-auto select-none [&>svg]:max-w-full [&>svg]:h-auto"
                 dangerouslySetInnerHTML={{ __html: svg }}
             />
-            {/* Bottom Action Footer with Theory button below diagram */}
-            <div className="px-3 py-2 border-t border-white/5 bg-zinc-950/90 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500">Want step-by-step scientific theory?</span>
-                <button
-                    onClick={() => requestDiagramTheory(clean, 'Flowchart / Diagram')}
-                    className="px-2.5 py-1 bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-300 hover:text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                    title="Generate in-depth technical theory for this exact diagram"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                    <span>Theory</span>
-                </button>
-            </div>
         </div>
     );
 }
@@ -169,34 +157,33 @@ function SvgBlock({ code }) {
     };
 
     return (
-        <div className="my-3 rounded-2xl border border-emerald-500/30 bg-zinc-950 p-3 relative group shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
-                <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[11px] font-bold text-emerald-300">2D Vector Schematic</span>
+        <div className="my-1.5 rounded-lg border border-emerald-500/20 bg-zinc-950/90 p-1.5 relative group shadow-lg">
+            <div className="flex flex-wrap items-center justify-between border-b border-zinc-800/70 pb-1.5 mb-1.5 gap-x-3 gap-y-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="text-[10px] font-bold text-emerald-300 whitespace-nowrap">2D Vector Schematic</span>
                     {isReplaying && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse">
-                            Re-streaming HTML...
+                        <span className="text-[8.5px] font-mono px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 animate-pulse shrink-0">
+                            Streaming...
                         </span>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
-                    {/* Theory Button in Header */}
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto flex-wrap">
                     <button
                         onClick={() => requestDiagramTheory(code, '2D Vector Schematic')}
-                        className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 hover:border-blue-400 text-blue-300 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                        className="px-2 py-0.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 hover:border-blue-400 text-blue-300 hover:text-white rounded text-[10px] font-semibold transition-all flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap"
                         title="Generate in-depth technical theory for this exact diagram"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                         <span>Theory</span>
                     </button>
                     <button
                         onClick={handleReplay}
                         disabled={isReplaying}
-                        className={`px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-emerald-500/50 text-zinc-300 hover:text-emerald-300 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm ${isReplaying ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        className={`px-2 py-0.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-emerald-500/50 text-zinc-300 hover:text-emerald-300 rounded text-[10px] font-semibold transition-all flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap ${isReplaying ? 'opacity-70 cursor-not-allowed' : ''}`}
                         title="Re-stream live SVG code construction"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isReplaying ? 'animate-spin text-emerald-400' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isReplaying ? 'animate-spin text-emerald-400' : ''}>
                             <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                             <path d="M3 3v5h5"/>
                             <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
@@ -206,45 +193,28 @@ function SvgBlock({ code }) {
                     </button>
                     <button
                         onClick={() => openDiagramOnBoard(code, '2D Vector Schematic')}
-                        className="px-3 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                        className="px-2 py-0.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 hover:text-white rounded text-[10px] font-semibold transition-all flex items-center gap-1 shrink-0 whitespace-nowrap"
+                        title="Open on Blackboard"
                     >
-                        <span>Open on Blackboard</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        <span>Blackboard</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     </button>
                 </div>
             </div>
 
-            <div className="relative overflow-hidden bg-black/40 rounded-xl p-2 flex items-center justify-center min-h-[160px]">
+            <div className="relative overflow-hidden bg-black/40 rounded p-1 flex items-center justify-center min-h-[100px]">
                 <div
-                    className="max-h-72 w-full overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-auto transition-all"
+                    className="max-h-64 w-full overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-auto transition-all"
                     dangerouslySetInnerHTML={{ __html: displaySvg }}
                 />
             </div>
 
-            <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-500">
-                <span className="flex items-center gap-1.5 text-zinc-400">
+            <div className="mt-1 pt-0.5 border-t border-white/5 flex items-center justify-between text-[9px] text-zinc-500">
+                <span className="flex items-center gap-1 text-zinc-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>2D Vector • Live Streamed SVG</span>
+                    <span>2D Vector Schematic</span>
                 </span>
-                <div className="flex items-center gap-2">
-                    {/* Small button below diagram named Theory as requested */}
-                    <button
-                        onClick={() => requestDiagramTheory(code, '2D Vector Schematic')}
-                        className="px-2.5 py-1 bg-blue-950/90 hover:bg-blue-900 border border-blue-500/50 text-blue-300 hover:text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                        title="Generate in-depth technical theory for this exact diagram"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                        <span>Theory</span>
-                    </button>
-                    <button
-                        onClick={handleReplay}
-                        disabled={isReplaying}
-                        className="hover:text-emerald-300 text-zinc-400 transition-colors flex items-center gap-1"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                        <span>Re-stream Code</span>
-                    </button>
-                </div>
+                <span className="text-zinc-500 font-mono text-[8.5px]">SVG Vector</span>
             </div>
         </div>
     );
@@ -515,55 +485,41 @@ export default function ChatMessage({ message, isTyping }) {
                                             const isThreeJsCode = !inline && (codeContent.includes('THREE.') || codeContent.includes('group.add') || codeContent.includes('createTextSprite'));
                                             if (isThreeJsCode) {
                                                 return (
-                                                    <div className="my-3 rounded-2xl border border-indigo-500/30 bg-zinc-950/90 p-4 relative group shadow-2xl overflow-hidden">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <div className="my-2 rounded-xl border border-indigo-500/25 bg-zinc-950/90 p-2.5 relative group shadow-lg overflow-hidden">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                                                                         <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                                                                         <line x1="12" y1="22.08" x2="12" y2="12"/>
                                                                     </svg>
                                                                 </div>
-                                                                <div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                                                        <h4 className="text-sm font-bold text-zinc-100">3D Spatial Scene Generated</h4>
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                                                        <h4 className="text-xs font-bold text-zinc-100 truncate">3D Spatial Scene</h4>
                                                                     </div>
-                                                                    <p className="text-xs text-zinc-400 mt-0.5">Interactive Three.js 3D model is ready</p>
+                                                                    <p className="text-[10px] text-zinc-400 truncate">Three.js interactive model ready</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
-                                                                {/* Theory Button for 3D */}
+                                                            <div className="flex items-center gap-1 shrink-0">
                                                                 <button
                                                                     onClick={() => requestDiagramTheory(codeContent, '3D Spatial Model')}
-                                                                    className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-purple-500/50 text-zinc-300 hover:text-purple-300 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
+                                                                    className="px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-purple-500/50 text-zinc-300 hover:text-purple-300 rounded text-[10px] font-semibold transition-all flex items-center gap-1 shadow-sm"
                                                                     title="Generate in-depth technical theory for this 3D model"
                                                                 >
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                                                                     <span>Theory</span>
                                                                 </button>
                                                                 <button
                                                                     onClick={() => open3DOnBoard(codeContent, '3D Spatial Scene')}
-                                                                    className="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white hover:text-black font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                                                                    className="px-2.5 py-1 bg-indigo-500 hover:bg-indigo-400 text-white hover:text-black font-bold rounded text-[10px] transition-all flex items-center gap-1.5 shadow-md"
                                                                 >
-                                                                    <span>Open in 3D Viewer</span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                                    <span>3D Viewer</span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                                                 </button>
                                                             </div>
-                                                        </div>
-
-                                                        {/* Bottom footer with Theory helper */}
-                                                        <div className="mt-2.5 pt-2 border-t border-indigo-500/20 flex items-center justify-between">
-                                                            <span className="text-[10px] text-zinc-400">Want step-by-step scientific theory?</span>
-                                                            <button
-                                                                onClick={() => requestDiagramTheory(codeContent, '3D Spatial Model')}
-                                                                className="px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/40 text-indigo-300 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
-                                                                title="Generate in-depth technical theory for this 3D model"
-                                                            >
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                                                                <span>Theory</span>
-                                                            </button>
                                                         </div>
                                                     </div>
                                                 );

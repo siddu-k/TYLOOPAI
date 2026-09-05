@@ -186,7 +186,7 @@ body,
    3D SPATIAL CANVAS STYLES
    ============================================================ */
 .canvas-3d-wrapper {
-  background: transparent !important;
+  position: relative;
 }
 
 .canvas-3d-bottom-dock {

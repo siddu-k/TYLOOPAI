@@ -138,10 +138,10 @@ export default function AvatarScene() {
         <div className="w-full h-full relative overflow-hidden">
             <AvatarLoadingOverlay />
             <Canvas
-                shadows
+                dpr={[1, 1.5]}
                 camera={{ position: [0.1, 1.7, 1.2], fov: 30 }}
                 gl={{
-                    powerPreference: 'default',
+                    powerPreference: 'high-performance',
                     antialias: true,
                     alpha: true,
                     preserveDrawingBuffer: false,

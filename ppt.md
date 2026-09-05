@@ -64,6 +64,8 @@
 ## Slide 6: Multi-Dimensional Smart Board (2D & 3D)
 **Smart Pedagogical & Algorithmic Workspace**
 - **2D Vector Engine (Mermaid & KaTeX)**: Interactive flowcharts, sequence diagrams, class models, state machines, and mathematical equations with high-resolution pan and zoom.
+- **Algorithmic State Transition Matrix**: At each step $i$, state $S_i$ evaluates decision boundaries:
+  $$S_{i+1} = \begin{cases} \text{Left Child} & \text{if } t < k_i \\ \text{Right Child} & \text{if } t > k_i \\ \text{Terminal Success} & \text{if } t = k_i \end{cases}$$
 - **3D Spatial Studio (WebGL & Three.js)**: Procedural 3D scene engine with OrbitControls, multi-axis rotation, dynamic lighting, and animated geometry for complex physical, biological, and algorithmic concepts.
 - **Draggable Multi-Pane Layout**: Flexible split-stage environment allowing concurrent visualization, chat reasoning, and avatar presence.
 

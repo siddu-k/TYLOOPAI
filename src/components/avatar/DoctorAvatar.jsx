@@ -88,29 +88,40 @@ export function DoctorAvatar(props) {
         return () => actions[animation]?.fadeOut(0.5);
     }, [animation, actions, mixer]);
 
-    // Cache skinned meshes with morph targets for 60fps performance
-    const morphMeshes = useRef([]);
+    // Cache skinned meshes with morph targets and bone references for 60fps performance
+    const morphEntries = useRef([]);
+    const headBoneRef = useRef(null);
+    const activeVisemesRef = useRef(new Set());
 
     useEffect(() => {
         const list = [];
         scene.traverse((child) => {
             if (child.isSkinnedMesh && child.morphTargetDictionary && child.morphTargetInfluences) {
-                list.push(child);
+                list.push({
+                    dict: child.morphTargetDictionary,
+                    influences: child.morphTargetInfluences
+                });
             }
         });
-        morphMeshes.current = list;
-    }, [scene]);
+        morphEntries.current = list;
+        headBoneRef.current = nodes.Head || scene.getObjectByName('Head');
+    }, [scene, nodes]);
 
     const setMorphTarget = (target, value, speed = 0.3) => {
-        for (let i = 0; i < morphMeshes.current.length; i++) {
-            const mesh = morphMeshes.current[i];
-            const index = mesh.morphTargetDictionary[target];
-            if (index !== undefined && mesh.morphTargetInfluences[index] !== undefined) {
-                mesh.morphTargetInfluences[index] = THREE.MathUtils.lerp(
-                    mesh.morphTargetInfluences[index],
-                    value,
-                    speed
-                );
+        const entries = morphEntries.current;
+        for (let i = 0; i < entries.length; i++) {
+            const { dict, influences } = entries[i];
+            const index = dict[target];
+            if (index !== undefined) {
+                const current = influences[index];
+                if (Math.abs(current - value) > 0.0005) {
+                    influences[index] = THREE.MathUtils.lerp(current, value, speed);
+                    if (value > 0.001 || influences[index] > 0.001) {
+                        activeVisemesRef.current.add(target);
+                    }
+                } else if (value === 0 && current !== 0) {
+                    influences[index] = 0;
+                }
             }
         }
     };
@@ -133,34 +144,45 @@ export function DoctorAvatar(props) {
         const volume = features?.volume || 0;
         const isSpeaking = speechState !== 'silence' && volume > 0.03;
 
-        // Controlled mouth opening amplitude (calibrated to prevent wide gaping)
+        // Controlled mouth opening amplitude
         const targetIntensity = isSpeaking
             ? THREE.MathUtils.clamp(volume * 2.2, 0.2, 0.65)
             : 0;
 
         // Apply active viseme with calibrated intensity
         if (isSpeaking && currentViseme && currentViseme !== VISEMES.sil) {
-            // Apply slight damping to wide vowels so they look natural
             let visemeMultiplier = 1.0;
-            if (currentViseme === VISEMES.aa) visemeMultiplier = 0.85; // Natural jaw drop without gaping
-            if (currentViseme === VISEMES.PP) visemeMultiplier = 0.9;  // Clean lip seal
+            if (currentViseme === VISEMES.aa) visemeMultiplier = 0.85;
+            if (currentViseme === VISEMES.PP) visemeMultiplier = 0.9;
 
             const attackSpeed = speechState === 'vowel' ? 0.35 : 0.45;
             setMorphTarget(currentViseme, targetIntensity * visemeMultiplier, attackSpeed);
+            activeVisemesRef.current.add(currentViseme);
         }
 
-        // Decay all other inactive visemes smoothly
-        Object.values(VISEMES).forEach((v) => {
-            if (isSpeaking && v === currentViseme) return;
-            setMorphTarget(v, 0, 0.25);
-        });
-
-        // Keep secondary blendshapes neutral to prevent double-opening
-        setMorphTarget('jawOpen', 0, 0.2);
-        setMorphTarget('mouthOpen', 0, 0.2);
+        // Only decay visemes that actually have non-zero influences (high performance)
+        if (activeVisemesRef.current.size > 0) {
+            activeVisemesRef.current.forEach((v) => {
+                if (isSpeaking && v === currentViseme) return;
+                setMorphTarget(v, 0, 0.25);
+                
+                let stillActive = false;
+                const entries = morphEntries.current;
+                for (let i = 0; i < entries.length; i++) {
+                    const idx = entries[i].dict[v];
+                    if (idx !== undefined && entries[i].influences[idx] > 0.005) {
+                        stillActive = true;
+                        break;
+                    }
+                }
+                if (!stillActive) {
+                    activeVisemesRef.current.delete(v);
+                }
+            });
+        }
 
         // Audio-reactive subtle head micro-movement while speaking
-        const headBone = nodes.Head || scene.getObjectByName('Head');
+        const headBone = headBoneRef.current;
         if (headBone && isSpeaking) {
             const nod = Math.sin(state.clock.elapsedTime * 6) * 0.02 * targetIntensity;
             const tilt = Math.sin(state.clock.elapsedTime * 3) * 0.015 * targetIntensity;

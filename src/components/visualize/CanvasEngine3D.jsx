@@ -180,7 +180,7 @@ export default function CanvasEngine3D({ code: propCode }) {
     // 1. Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(bgColor);
-    scene.fog = new THREE.FogExp2(bgColor, 0.002);
+    scene.fog = null;
     sceneRef.current = scene;
 
     // 2. Camera
@@ -188,10 +188,10 @@ export default function CanvasEngine3D({ code: propCode }) {
     camera.position.set(35, 28, 42);
     cameraRef.current = camera;
 
-    // 3. Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    // 3. Renderer (High-Performance 60FPS)
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(new THREE.Color(bgColor), 1.0);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -351,7 +351,7 @@ export default function CanvasEngine3D({ code: propCode }) {
     const col = new THREE.Color(bgColor);
     if (sceneRef.current) {
       sceneRef.current.background = col;
-      if (sceneRef.current.fog) sceneRef.current.fog.color = col;
+      sceneRef.current.fog = null;
     }
     if (rendererRef.current) {
       rendererRef.current.setClearColor(col, 1.0);
@@ -360,14 +360,34 @@ export default function CanvasEngine3D({ code: propCode }) {
     // Adjust ambient lighting and grid for light backdrops
     const isLight = col.r * 0.299 + col.g * 0.587 + col.b * 0.114 > 0.5;
     if (ambientLightRef.current) {
-      ambientLightRef.current.intensity = isLight ? 1.5 : 0.8;
+      ambientLightRef.current.intensity = isLight ? 1.6 : 0.8;
+      ambientLightRef.current.color.setHex(isLight ? 0xffffff : 0xffffff);
     }
-    if (gridHelperRef.current) {
-      if (gridHelperRef.current.material) {
-        gridHelperRef.current.material.color.setHex(isLight ? 0x94a3b8 : 0x4f46e5);
+
+    // Recreate grid helper dynamically to ensure contrast on light and dark backgrounds
+    if (sceneRef.current) {
+      const oldGrid = sceneRef.current.getObjectByName('gridHelper');
+      if (oldGrid) {
+        sceneRef.current.remove(oldGrid);
+        if (oldGrid.geometry) oldGrid.geometry.dispose();
+        if (oldGrid.material) {
+          if (Array.isArray(oldGrid.material)) oldGrid.material.forEach((m) => m.dispose());
+          else oldGrid.material.dispose();
+        }
       }
+      const gridHelper = new THREE.GridHelper(
+        80,
+        40,
+        isLight ? 0x64748b : 0x4f46e5,
+        isLight ? 0xcbd5e1 : 0x1e1b4b
+      );
+      gridHelper.position.y = -10;
+      gridHelper.name = 'gridHelper';
+      gridHelper.visible = showGrid;
+      sceneRef.current.add(gridHelper);
+      gridHelperRef.current = gridHelper;
     }
-  }, [bgColor]);
+  }, [bgColor, showGrid]);
 
   // ── Dynamic Studio Lighting Presets ────────────────────────
   useEffect(() => {
@@ -1395,11 +1415,29 @@ export default function CanvasEngine3D({ code: propCode }) {
               });
             };
           }
+          if (prop === 'background') {
+            return target.background;
+          }
           return target[prop];
         },
+        set(target, prop, value) {
+          if (prop === 'background' || prop === 'fog') {
+            // Keep user-selected backdrop active and prevent scripts from adding fog
+            return true;
+          }
+          target[prop] = value;
+          return true;
+        }
       });
 
       runFn(threeExtended, sceneProxy, group, createTextSprite, onAnimate, wireframe, cameraRef.current, controlsRef.current);
+
+      // Re-apply current background color to scene and ensure no fog
+      if (sceneRef.current) {
+        const activeColor = new THREE.Color(bgColor);
+        sceneRef.current.background = activeColor;
+        sceneRef.current.fog = null;
+      }
     } catch (err) {
       console.warn('Failed to compile 3D script:', err);
       buildDemoScene(group);
