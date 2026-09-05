@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-// ── 6 High-Quality Technical & Healthcare Diagram SVG Textures (400x250) ──
+// ── 6 High-Quality Technical & Engineering Diagram SVG Textures (400x250) ──
 const DIAGRAM_SVGS = [
   // 1. Quicksort & Divide-and-Conquer Sorting Theory
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="400" height="250">
@@ -268,10 +268,10 @@ const DIAGRAM_SVGS = [
       <text x="170" y="26" fill="#10b981" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">AUTH POD</text>
 
       <rect x="130" y="45" width="80" height="35" rx="4" fill="#18223d" stroke="#818cf8" stroke-width="1.5" />
-      <text x="170" y="66" fill="#818cf8" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">AI TRIAGE</text>
+      <text x="170" y="66" fill="#818cf8" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">AI INFERENCE</text>
 
       <rect x="130" y="85" width="80" height="35" rx="4" fill="#18223d" stroke="#ec4899" stroke-width="1.5" />
-      <text x="170" y="106" fill="#ec4899" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">DIAGNOSTICS</text>
+      <text x="170" y="106" fill="#ec4899" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" text-anchor="middle">VECTOR DB</text>
 
       <!-- Connections to Database -->
       <path d="M 210 25 L 260 55 M 210 65 L 260 55 M 210 100 L 260 55" stroke="#f59e0b" stroke-width="1.5" />

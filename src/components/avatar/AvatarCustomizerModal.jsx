@@ -34,7 +34,7 @@ const EYE_PRESETS = [
 
 const OUTFIT_PRESETS = [
     { name: 'Charcoal Black', color: '#18181b' },
-    { name: 'Doctor White', color: '#f8fafc' },
+    { name: 'Studio White', color: '#f8fafc' },
     { name: 'Navy Executive', color: '#1e293b' },
     { name: 'Crimson Velvet', color: '#881337' },
     { name: 'Emerald Forest', color: '#064e3b' },
@@ -42,7 +42,7 @@ const OUTFIT_PRESETS = [
 ];
 
 const LIGHTING_PRESETS = [
-    { id: 'clinical', label: 'Clinical Medical', desc: 'Crisp white & teal rim lighting' },
+    { id: 'clinical', label: 'Crisp Cyan', desc: 'Crisp cool-white & teal rim lighting' },
     { id: 'cyberpunk', label: 'Cyberpunk Neon', desc: 'Electric cyan, magenta & purple' },
     { id: 'warm', label: 'Golden Warmth', desc: 'Cozy amber & soft studio fill' },
     { id: 'studio', label: 'Studio Pro', desc: 'High-contrast balanced portrait key' },

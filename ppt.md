@@ -1,81 +1,106 @@
-# Tyloop AI — Hackathon Presentation (Slides)
+# Tyloop AI — Project Defense & Presentation (Slides)
 
 ---
 
-## Slide 1: Title Slide
-**Tyloop AI: The Future of Immersive Healthcare**
-*AI-Driven Consultations with 3D Human-like Interaction*
+## Slide 1: System Showcase & Identity
+**Tyloop AI: Autonomous Multi-Modal Desktop AI Platform**
+*Bridging Conversational Intelligence with Spatial Visualization and Embodied AI*
 
-- **Tagline**: Reshaping patient-doctor interaction through emotion and immersion.
-- **Presenter**: [Your Name]
-- **Category**: Healthcare / Artificial Intelligence
-
----
-
-## Slide 2: The Problem
-**Traditional Telehealth is Stagnant**
-1. **Cold Interactions**: Text-only or static video calls lack empathy.
-2. **Delayed Feedback**: Symptom checking often feels like filling out a dry form.
-3. **Data Silos**: Medical records and consultation history are rarely unified in a premium interface.
-4. **Privacy Concerns**: Cloud-based LLMs raise data security red flags.
+- **Tagline**: Don't just read theory. Visualize, interact, and master concepts.
+- **Presenter**: Engineering Project Defense
+- **Category**: Artificial Intelligence / Multi-Modal Computing / Computer Science & Engineering Education
+- **Key Modules**:
+  - 3D Viseme Avatar & Speech Physics
+  - Hybrid AI Inference (Gemini Cloud + Ollama Local)
+  - 2D Vector & 3D Spatial Smart Boards
+  - AI Slide Deck Studio & Generative Presentations
+  - AI Assessment & Document/PDF Quiz Mode
+  - Split-Screen Interactive Mock Interviewer
 
 ---
 
-## Slide 3: The Solution
-**Tyloop: The Unified AI Assistant**
-- **Immersive 3D Presence**: A responsive medical avatar that talks, blinks, and reacts.
-- **Voice-to-Voice Interaction**: Natural, hands-free conversation loop.
-- **Privacy First**: Local AI processing via **Ollama**.
-- **All-in-One Hub**: Seamless integration of triage, medical records, and doctor appointments.
+## Slide 2: Problem Definition
+**Beyond Monolithic Plain Text AI**
+1. **The Text-Only Bottleneck**: Abstract algorithms, distributed systems, neural networks, and circuits cannot be mastered through walls of static text.
+2. **Passive vs Interactive Learning**: Users need rotatable 3D coordinate spaces, dynamic 2D vector diagrams, and real-time assessments rather than passive reading.
+3. **Cloud Lock-in & Privacy Concerns**: Enterprise and academic codebases need local, zero-cloud offline capability without transmitting intellectual property to proprietary remote clouds.
 
 ---
 
-## Slide 4: Real-time Technical Innovation
-**Proprietary Feel, Open-Source Power**
-- **3D Lip Sync**: Real-time frequency analysis mapping audio to visemes (mouth shapes).
-- **Sentence-Streaming TTS**: AI starts speaking as soon as the first thought is generated—zero latency.
-- **Unified Schema**: Supabase-backed persistent medical profile and chat history.
+## Slide 3: System Architecture & Data Flow
+**End-to-End Multimodal Reactive Pipeline**
+- **Multimodal Input Layer**: Audio Speech (STT), PDF & Document Ingestion, Webcam Video Stream, and Native Desktop GUI (Electron + Vite + React 19).
+- **Unified Inference Engine**:
+  - **Google Gemini Cloud**: High-throughput multimodal processing with `@google/genai` (Gemini 3.5 Flash Lite).
+  - **Ollama Local Engine**: 100% offline HTTP streaming to `localhost:11434` (Qwen 2.5 Coder, Llama 3.2, DeepSeek, Mistral).
+- **Representation Stages**:
+  - 3D Avatar Scene (Viseme morph targets via Three.js & R3F).
+  - Smart Visualizer (Mermaid vector graphs & 3D WebGL spatial coordinate models).
+  - Slide Deck Studio (Reactive Markdown slide synthesis).
+  - Assessment Quiz Engine (PDF parsing & auto-scored evaluations).
 
 ---
 
-## Slide 5: Core Features (A-Z)
-- **AI Triage**: Advanced symptom analysis with severity scoring.
-- **Mock Interview / Consultation**: High-pressure mode for clinical practice or patient intake.
-- **Medical Vault**: Secure storage for reports and prescriptions.
-- **Geo-Smart Booking**: Locating the nearest clinics with one-click routing.
+## Slide 4: Dual Inference Backend Engine
+**Proprietary Hybrid Architecture (Cloud Speed + Offline Sovereignty)**
+- **Google GenAI (Gemini Cloud API)**:
+  - Sub-second streaming token decoder via Web Streams API.
+  - Generates complex structured outputs, KaTeX math, Mermaid graph specs, and procedural Three.js simulation code.
+- **Ollama Local Engine (100% Offline)**:
+  - Native direct streaming with zero cloud telemetry.
+  - In-app model manager with streaming download percentage progress.
+  - Full support for local coding and reasoning models.
 
 ---
 
-## Slide 6: Technical Stack
-- **Desktop**: Electron (Native feel, cross-platform).
-- **Frontend**: React 19 + Vite 8.
-- **3D Engine**: Three.js / React Three Fiber.
-- **Backend/Auth**: Supabase.
-- **Inference**: Ollama (Llama 3.2, Qwen 2.5 Coder).
+## Slide 5: Embodied AI — 3D Avatar & Real-Time Lip-Sync
+**Hardware-Accelerated Embodied Interaction**
+- **Real-Time Viseme Lip-Sync**: Maps speech audio frequencies to standard viseme morph targets (A, E, I, O, U, consonants) with smooth lerp interpolation.
+- **Avatar Customizer Studio**: Real-time modification of skin tone, hair color, eye glow, outfit shaders, and dynamic lighting rigs (Studio Cyan, Cyber, Warm).
+- **Acoustic Audio Tuning**: Voice pitch calibration, speech velocity controls, and sentence-chunked low-latency streaming TTS.
 
 ---
 
-## Slide 7: UI/UX & Aesthetics
-**Premium Zinc Dark Experience**
-- **Design Philosophy**: Minimalist, medical-grade, and "Dark Zinc" aesthetics.
-- **Key Elements**: Glassmorphism, smooth R3F transitions, and 60fps avatar animations.
-- **Accessibility**: Voice-first design for inclusive healthcare.
+## Slide 6: Multi-Dimensional Smart Board (2D & 3D)
+**Smart Pedagogical & Algorithmic Workspace**
+- **2D Vector Engine (Mermaid & KaTeX)**: Interactive flowcharts, sequence diagrams, class models, state machines, and mathematical equations with high-resolution pan and zoom.
+- **3D Spatial Studio (WebGL & Three.js)**: Procedural 3D scene engine with OrbitControls, multi-axis rotation, dynamic lighting, and animated geometry for complex physical, biological, and algorithmic concepts.
+- **Draggable Multi-Pane Layout**: Flexible split-stage environment allowing concurrent visualization, chat reasoning, and avatar presence.
 
 ---
 
-## Slide 8: Future Roadmap
-- **Emotion Recognition**: Analyzing user tone to adjust AI empathy.
-- **IoT Integration**: Syncing with wearables (Apple Watch/Fitbit) for real-time vitals.
-- **Multi-Avatar Personas**: Specialized avatars for Pediatrics, Surgery, and Mental Health.
+## Slide 7: AI Slide Deck Studio
+**Generative Presentation Engineering**
+- **Automated Deck Synthesis**: Transforms any concept, document, or repository into structured, dense presentation decks.
+- **Interactive Presentation Controls**: Fullscreen presentation mode, keyboard slide navigation, progress tracking, and audience tailoring.
+- **Presenter Co-Pilot**: Embedded co-pilot for contextual Q&A, slide iteration, and one-click export.
 
 ---
 
-## Slide 9: Conclusion
-**Tyloop AI: Humanizing Artificial Intelligence**
-*Transforming healthcare from a transaction into a conversation.*
+## Slide 8: AI Assessment & Document Quiz Mode
+**Autonomous Evaluation & Testing Engine**
+- **PDF & Document Ingestion**: Ingests textbooks, lecture notes, markdown files, and source code files directly in-browser.
+- **Interactive Scoring Studio**: Dynamic multiple-choice questions, instant scoring metrics, detailed technical rationales, and audio question readouts.
+- **Session History & Retesting**: Persistent quiz revision history for continuous practice and knowledge retention.
 
-- **Contact**: [Your Email/Github]
-- **Demo**: [Live Demo Link]
+---
+
+## Slide 9: AI Mock Technical Interviewer
+**High-Fidelity Career & Technical Interview Simulation**
+- **Dual Video Call Stage**: Split-screen interface presenting the 3D AI Interviewer alongside the candidate's live webcam feed.
+- **Role-Tailored Assessment**: Simulates realistic technical interviews for Software Engineering, System Design, DevOps, and Product Architecture.
+- **Real-Time Voice Loop & Evaluation**: Voice-driven conversational turn-taking with live transcripts and holistic feedback.
+
+---
+
+## Slide 10: Technology Stack & Defense Summary
+**Production-Grade Engineering Standards**
+- **Frontend GUI**: React 19, Vite 8, Tailwind CSS v4, Lucide vector icons.
+- **Desktop Runtime**: Electron 31 (Native OS IPC & desktop packaging).
+- **3D Graphics & Spatial**: Three.js, React Three Fiber, Drei, WebGL.
+- **Inference Layer**: Google GenAI SDK (`@google/genai`) + Local Ollama HTTP API.
+- **State & Storage**: Zustand state store with persistent localStorage serialization and Supabase cloud sync.
+- **Conclusion**: Tyloop AI demonstrates that uniting spatial 3D visualization, embodied AI avatars, and dual cloud/offline inference delivers a far superior learning and productivity environment than conventional text-only chatbots.
 
 ---
 

@@ -121,7 +121,7 @@ function AvatarExperience() {
                 </>
             ) : (
                 <>
-                    {/* Medical / Clinical Lighting */}
+                    {/* Crisp Studio / Teal Lighting */}
                     <ambientLight intensity={0.4} />
                     <directionalLight position={[2, 3, 5]} intensity={1.8} color="#ffffff" />
                     <directionalLight position={[-2, 1, -3]} intensity={0.6} color="#14b8a6" />

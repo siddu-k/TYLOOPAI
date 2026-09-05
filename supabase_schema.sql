@@ -1,5 +1,5 @@
 -- ============================================================
--- DHANVANTARI AI — SUPABASE SCHEMA
+-- TYLOOP AI — SUPABASE DATABASE SCHEMA
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor)
 -- ============================================================
 
@@ -10,30 +10,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email TEXT,
   full_name TEXT,
-  age INTEGER,
-  gender TEXT CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say')),
-  blood_group TEXT CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', NULL)),
-  allergies TEXT[] DEFAULT '{}',
-  chronic_conditions TEXT[] DEFAULT '{}',
-  emergency_contact TEXT,
-  phone TEXT,
+  educational_level TEXT,
+  study_goals TEXT,
   avatar_url TEXT,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
+  avatar_customization JSONB DEFAULT '{}'::jsonb,
+  preferred_ai_model TEXT DEFAULT 'gemini-3.5-flash-lite',
+  voice_settings JSONB DEFAULT '{"pitch": 1.0, "rate": 1.0, "voice": "default"}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
-
--- Safely add new columns if the table already existed before Phase 9
-DO $$ 
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='latitude') THEN
-    ALTER TABLE public.profiles ADD COLUMN latitude DOUBLE PRECISION;
-    ALTER TABLE public.profiles ADD COLUMN longitude DOUBLE PRECISION;
-  END IF;
-END $$;
-
--- Note: RLS disabled for testing as requested
 
 -- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -56,12 +41,12 @@ CREATE TRIGGER on_auth_user_created
 CREATE TABLE IF NOT EXISTS public.chat_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  title TEXT DEFAULT 'New Consultation',
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'ended')),
-  summary JSONB,
-  severity TEXT CHECK (severity IN ('low', 'moderate', 'high', 'critical', NULL)),
+  title TEXT DEFAULT 'New Session',
+  mode TEXT DEFAULT 'chat' CHECK (mode IN ('chat', 'visualize', 'visualize2d', 'visualize3d', 'ppt', 'quiz', 'interview')),
+  model_used TEXT DEFAULT 'gemini-3.5-flash-lite',
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'archived')),
   created_at TIMESTAMPTZ DEFAULT now(),
-  ended_at TIMESTAMPTZ
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ============================================================
@@ -70,59 +55,64 @@ CREATE TABLE IF NOT EXISTS public.chat_sessions (
 CREATE TABLE IF NOT EXISTS public.chat_messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+  sender TEXT NOT NULL CHECK (sender IN ('user', 'assistant', 'system')),
   content TEXT NOT NULL,
-  image_url TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  attachment_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ============================================================
--- 4. MEDICAL RECORDS TABLE
+-- 4. VISUAL BOARDS TABLE (2D Diagrams & 3D Spatial Scenes)
 -- ============================================================
-CREATE TABLE IF NOT EXISTS public.medical_records (
+CREATE TABLE IF NOT EXISTS public.visual_boards (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
-  record_type TEXT NOT NULL CHECK (record_type IN ('report', 'prescription', 'image', 'summary', 'other')),
-  file_url TEXT,
-  notes TEXT,
-  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE SET NULL,
+  board_type TEXT NOT NULL CHECK (board_type IN ('2d_mermaid', '3d_spatial')),
+  code_content TEXT NOT NULL,
+  thumbnail_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ============================================================
--- 5. DOCTORS AND APPOINTMENTS
+-- 5. QUIZZES & ASSESSMENTS TABLE
 -- ============================================================
-CREATE TABLE IF NOT EXISTS public.doctors (
-  id UUID REFERENCES public.profiles(id) ON DELETE CASCADE PRIMARY KEY,
-  full_name TEXT,
-  specialty TEXT,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  available_status BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.appointments (
+CREATE TABLE IF NOT EXISTS public.quizzes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  patient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  doctor_id UUID REFERENCES public.doctors(id) ON DELETE CASCADE,
-  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE SET NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
-  scheduled_at TIMESTAMPTZ,
+  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  topic TEXT NOT NULL,
+  questions JSONB NOT NULL,
+  score INTEGER,
+  total_questions INTEGER,
+  completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ============================================================
--- 6. STORAGE BUCKET FOR MEDICAL FILES
+-- 6. SLIDE DECKS TABLE (PPT Studio)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.ppt_decks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  topic TEXT NOT NULL,
+  slides JSONB NOT NULL,
+  theme TEXT DEFAULT 'modern',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 7. STORAGE BUCKET FOR USER DOCUMENTS & ASSETS
 -- ============================================================
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('medical-files', 'medical-files', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+VALUES ('documents', 'documents', true)
+ON CONFLICT (id) DO NOTHING;
 
--- For storage we must add an open policy because storage.objects has RLS enabled by default system-wide
-DROP POLICY IF EXISTS "Allow all operations for medical-files" ON storage.objects;
-CREATE POLICY "Allow all operations for medical-files"
+DROP POLICY IF EXISTS "Allow all operations for documents" ON storage.objects;
+CREATE POLICY "Allow all operations for documents"
   ON storage.objects FOR ALL
-  USING (bucket_id = 'medical-files')
-  WITH CHECK (bucket_id = 'medical-files');
+  USING (bucket_id = 'documents')
+  WITH CHECK (bucket_id = 'documents');

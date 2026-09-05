@@ -1,22 +1,23 @@
-# Tyloop Project Rebuild Document (Exhaustive Hackathon Blueprint)
+# Tyloop Project Architecture & Specification Document
 
-This document is the definitive "A to Z" guide for rebuilding the **Tyloop** application. It contains every technical specification, architecture detail, and core code snippet required for a complete replica.
+This document is the definitive technical blueprint and specification for the **Tyloop AI** application. It contains every technical specification, architecture detail, and core code snippet required for the system.
 
 ---
 
 ## 1. Project Overview
-Tyloop is an Electron-based AI assistant featuring a 3D medical avatar with real-time lip-syning, voice-to-voice interaction, and local model management.
+Tyloop is an Electron-based multi-modal AI desktop platform and interactive learning workstation featuring an embodied 3D avatar with real-time lip-syncing, voice-to-voice interaction, 2D/3D visual learning engines, generative slide deck studio, assessment quiz generator, mock technical interview simulator, and dual inference management (Cloud Gemini + Offline Ollama).
 
 ---
 
 ## 2. Technical Stack
 - **Frontend**: React 19, Vite 8, Tailwind CSS 4.
 - **Desktop**: Electron 31 (Main/Renderer architecture).
-- **State**: Zustand (Session, Voice, and Model states).
-- **3D/Graphics**: Three.js, React Three Fiber (R3F), Drei.
-- **Lip Sync**: `wawa-lipsync` (Audio-to-Viseme mapping).
-- **Backend**: Supabase (PostgreSQL, Auth, Storage).
-- **Local AI**: Ollama (Interfaced via fetch API).
+- **State**: Zustand (Session, Voice, Visualization, Quiz, PPT, and Model states).
+- **3D/Graphics**: Three.js, React Three Fiber (R3F), Drei, WebGL OrbitControls.
+- **Lip Sync & Audio**: `wawa-lipsync` (Audio-to-Viseme mapping), Web Audio API, Web Speech STT/TTS.
+- **Diagrams & Math**: Mermaid.js, KaTeX, React-Markdown.
+- **Backend & Persistence**: Supabase (PostgreSQL, Storage) + LocalStorage.
+- **Inference Engines**: Google GenAI SDK (`@google/genai`) and Local Ollama (HTTP streaming via fetch API).
 
 ---
 
@@ -26,6 +27,7 @@ Tyloop is an Electron-based AI assistant featuring a 3D medical avatar with real
 - **Surface/Card**: `#18181b` (Zinc 900)
 - **Primary Accent**: `#fafafa` (Zinc 50)
 - **Borders**: `#27272a` (Zinc 800)
+- **Status Accents**: Emerald (`#10b981`), Cyan (`#06b6d4`), Amber (`#f59e0b`), Indigo (`#6366f1`)
 - **Glassmorphism**: 
   ```css
   .glass-panel {
@@ -37,52 +39,57 @@ Tyloop is an Electron-based AI assistant featuring a 3D medical avatar with real
 
 ---
 
-## 4. Core Services Logic (Deep Dive)
+## 4. Core Services Logic
 
-### A. Local AI Management (`ollamaService.js`)
-Tyloop interacts directly with the local Ollama server (`http://localhost:11434`).
+### A. Dual AI Management
+Tyloop provides a unified interface for both cloud and local models:
 
-- **Stream Chatting**: Uses the `/api/chat` endpoint with `stream: true`.
-- **Model Pulling (Download)**: Uses the `/api/pull` endpoint. It parses streaming JSON chunks to track progress:
-  ```javascript
-  // Download logic with progress tracking
-  const response = await fetch('http://localhost:11434/api/pull', {
-      method: 'POST',
-      body: JSON.stringify({ name: modelName, stream: true })
-  });
-  const reader = response.body.getReader();
-  // Parse chunks for: { status: "downloading", completed: 123, total: 456 }
-  ```
+1. **Google Gemini (`geminiService.js`)**:
+   - Uses `@google/genai` with `gemini-3.5-flash-lite`.
+   - Streams responses via the Web Streams API for instant visual and token output.
+   - Generates structured code blocks for Mermaid diagrams and procedural Three.js 3D scenes.
+
+2. **Local Ollama (`ollamaService.js`)**:
+   - Interacts directly with local Ollama daemon (`http://localhost:11434`).
+   - Stream chat via `/api/chat` with `stream: true`.
+   - Live model pulling via `/api/pull` with streaming progress byte calculation:
+     ```javascript
+     const response = await fetch('http://localhost:11434/api/pull', {
+         method: 'POST',
+         body: JSON.stringify({ name: modelName, stream: true })
+     });
+     const reader = response.body.getReader();
+     // Parses chunks: { status: "downloading", completed: 123, total: 456 }
+     ```
 
 ### B. Voice-to-Voice Stack (`voiceService.js`)
-- **STT**: Uses the native browser `SpeechRecognition` API.
-- **TTS**: Uses a free high-quality voice via a Vite proxy to Google Translate TTS:
-  - Endpoint: `/api/tts/translate_tts?ie=UTF-8&tl=en-US&client=tw-ob&q=...`
-  - **Chunking**: Text is split by sentence (`.?!`) and queued to avoid character limits and enable faster response starts.
-- **Lip Sync Integration**: Each `Audio` object is passed to `lipsyncManager.connectAudio(currentAudio)` before playback.
+- **STT**: Native browser `SpeechRecognition` / `webkitSpeechRecognition` API.
+- **TTS**: High-quality audio via chunked sentence proxy or Web Speech synthesis:
+  - **Chunking**: Text is segmented by punctuation (`.?!`) and processed sequentially for zero perceived latency.
+- **Lip Sync Integration**: Each `Audio` instance connects to `lipsyncManager.connectAudio(currentAudio)` before playback.
 
 ---
 
 ## 5. 3D Avatar & Lip Sync Implementation
 
-### `DoctorAvatar.jsx` (Core Logic)
-Handles the 3D model loading and visibility of morph targets.
+### 3D Avatar Core (`DoctorAvatar.jsx` / `AvatarScene.jsx`)
+Handles 3D model loading, custom material shaders, and viseme morph target interpolation:
 
 ```javascript
 import { useAnimations, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useRef, useState, useEffect } from 'react';
+import { useRef } from 'react';
 import * as THREE from 'three';
 import { lipsyncManager } from '../../services/lipsyncService';
 
 export function DoctorAvatar(props) {
-    const { nodes, materials, scene } = useGLTF('/models/avatar.glb');
+    const { nodes, scene } = useGLTF('/models/avatar.glb');
     const group = useRef();
 
     useFrame(() => {
-        // Real-time lip sync mapping
+        // Real-time lip sync mapping from audio spectrum
         lipsyncManager.processAudio();
-        const { viseme, state } = lipsyncManager;
+        const { viseme } = lipsyncManager;
 
         scene.traverse((child) => {
             if (child.isSkinnedMesh && child.morphTargetDictionary) {
@@ -92,7 +99,7 @@ export function DoctorAvatar(props) {
                         child.morphTargetInfluences[index], 1, 0.3
                     );
                 }
-                // Lerp all other visemes back to 0
+                // Interpolate non-active visemes back to zero
                 Object.keys(child.morphTargetDictionary).forEach(key => {
                     if (key !== viseme) {
                         const idx = child.morphTargetDictionary[key];
@@ -111,28 +118,45 @@ export function DoctorAvatar(props) {
 
 ---
 
-## 6. Page & Button Map
+## 6. Functional Page & Feature Map
 
-### Dashboard
-- **Interview Mode**: Split screen with `End Interview` (Closes video/mic).
-- **Call Toggle**: Persistent button to enable/disable auto-mic (Voice Call mode).
+### 1. Dashboard (`DashboardPage.jsx`)
+- **Interactive Multi-Pane Layout**: Draggable dividers between the smart board / 3D spatial canvas, synchronized AI chat panel, and 3D avatar scene.
+- **Visualize Mode**: Toggles between 2D Mermaid Blackboard and 3D Three.js Spatial Studio.
+- **Ppt Mode**: Embeds the full-screen AI Slide Deck Viewer with presenter navigation.
+- **Quiz Mode**: Embeds the interactive assessment studio with real-time scoring.
 
-### Settings
-- **Model Grid**: Lists popular models (Llama 3.2, Qwen Coder).
-- **Pull Button**: Triggers the Ollama pull stream and updates the `downloadProgress` bar.
-- **Select Model**: Sets the active model for all future chat sessions.
+### 2. Smart Board & Spatial Studio
+- **2D Vector Visualizer (`MermaidBoard.jsx`)**: Renders architecture diagrams, flowcharts, and KaTeX equations with high-resolution pan/zoom.
+- **3D Spatial Studio (`CanvasEngine3D.jsx`)**: Procedural WebGL runtime with camera `OrbitControls` executing dynamic AI-generated Three.js simulations.
 
-### Onboarding
-- **Continue**: Validates name input and initializes local `tyloop_user_name` storage.
+### 3. AI Slide Deck Studio (`PptDeckViewer.jsx`, `PptSetupModal.jsx`)
+- Generates structured, multi-slide presentation decks from topics or documents.
+- Includes slide navigation, presentation counter, full-screen mode, and slide co-pilot.
+
+### 4. Assessment Quiz Mode (`QuizViewer.jsx`, `QuizSetupModal.jsx`)
+- Ingests PDFs, documents, or custom topics.
+- Generates comprehensive multiple-choice questions with automated scoring, question audio readouts, and detailed rationales.
+
+### 5. Mock Interview (`InterviewSetup.jsx`, `UserVideo.jsx`)
+- Dual video interface featuring user webcam video and the AI interviewer avatar.
+- Role-tailored question generation with hands-free voice question-and-answer loop.
+
+### 6. Settings (`SettingsPage.jsx`)
+- **Google GenAI Tab**: Manage API keys, test connection, and toggle model presets.
+- **Local AI Tab**: Real-time Ollama model downloading, progress monitoring, and active model selection.
+- **Avatar Customizer Modal**: Customize hair color, skin tone, eye glow, clothing shaders, and studio lighting presets.
 
 ---
 
 ## 7. Database Schema (Supabase)
-- `profiles`: User info, age, gender, medical history (allergies, conditions).
-- `chat_sessions`: Title, status, and AI severity summary.
-- `chat_messages`: Full history with support for `image_url` (Vision).
-- `medical_records`: File metadata and `file_url` for reports.
+- `profiles`: User information, display name, educational level, study preferences, and avatar configurations.
+- `chat_sessions`: Session metadata, active model, title, and session mode (chat, visualize, ppt, quiz, interview).
+- `chat_messages`: Full message history with support for markdown, attachments, diagrams, and code snippets.
+- `quizzes`: Saved quizzes, questions, options, rationales, and user scores.
+- `ppt_decks`: Saved slide decks, slide JSON schemas, and presentation themes.
+- `visual_boards`: Saved 2D vector diagrams and 3D simulation source scripts.
 
 ---
 
-*This document is the complete source of truth for the Tyloop project.*
+*This document is the definitive source of truth for the Tyloop AI architecture.*
