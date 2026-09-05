@@ -30,6 +30,27 @@ export function extractMermaidDiagram(markdown) {
         return rawSvgMatch[0].trim();
     }
 
+    // 0c. In-progress STREAMING SVG — has <svg opening but no </svg> closing yet
+    // Truncate at last valid tag boundary and close it so the board can render progressively
+    if (markdown.includes('<svg') && !markdown.includes('</svg>')) {
+        const svgStart = markdown.indexOf('<svg');
+        if (svgStart !== -1) {
+            let partialSvg = markdown.substring(svgStart);
+            // Need at least the opening <svg...> tag to be complete
+            const openTagEnd = partialSvg.indexOf('>');
+            if (openTagEnd > 0 && partialSvg.length > openTagEnd + 20) {
+                // Truncate at the last complete tag boundary
+                const lastCloseTag = partialSvg.lastIndexOf('>');
+                if (lastCloseTag > openTagEnd) {
+                    partialSvg = partialSvg.substring(0, lastCloseTag + 1);
+                }
+                // Close the SVG
+                partialSvg += '\n</svg>';
+                return partialSvg;
+            }
+        }
+    }
+
     // 1. Completed mermaid block
     const match = markdown.match(/```(?:mermaid)\s*([\s\S]*?)```/i);
     if (match) {
@@ -114,8 +135,11 @@ DIRECTIONS:
    - For system structures & relationships: Use standard \`classDiagram\` or \`erDiagram\`.
    - For trees & graphs: Use standard \`graph TD\` or \`graph LR\`.
 
-4. EXPLANATION:
-   - Follow underneath with a concise, clear teacher explanation and step-by-step intuition in plain text.
+4. STRICT ZERO-THEORY POLICY:
+   - Output ONLY a single-line heading (e.g. \`### [Topic] Diagram\`).
+   - IMMEDIATELY output the \`\`\`mermaid diagram code.
+   - DO NOT provide long theory, essays, or paragraphs upfront unless the user explicitly requests theory.
+   - DO NOT DEVIATE from the requested diagram topic. Focus 100% of tokens on diagram accuracy.
 
 Zero errors. Clean, standard Mermaid diagrams enclosed in triple backticks only!`;
     }
@@ -145,6 +169,9 @@ Zero errors. Clean, standard Mermaid diagrams enclosed in triple backticks only!
             model: selectedModel,
             messages: ollamaMessages,
             stream: true,
+            options: {
+                temperature: 0.7
+            }
         }),
         signal,
     });

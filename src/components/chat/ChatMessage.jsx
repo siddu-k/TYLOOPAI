@@ -5,27 +5,44 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import mermaid from 'mermaid';
 import useAppStore from '../../stores/appStore';
-import { renderCachedMermaid, cleanMermaidCode, mermaidSvgCache } from '../../services/mermaidCache';
+import { renderMermaidFresh, cleanMermaidCode } from '../../services/mermaidCache';
+
+// Helper to request in-depth theory for an exact diagram
+function requestDiagramTheory(diagramCode, label = 'Diagram') {
+    const { setPendingUserPrompt, activeConcept, activeBoardTitle } = useAppStore.getState();
+    const topic = activeConcept || activeBoardTitle || label;
+    const cleanSnippet = diagramCode ? diagramCode.trim().slice(0, 2500) : '';
+    const prompt = `Please provide a thorough scientific theory and step-by-step technical breakdown for ${topic} based on this exact diagram:
+
+\`\`\`
+${cleanSnippet}
+\`\`\`
+
+Explain in detail:
+1. Core Theory & Fundamental Governing Principles
+2. Step-by-Step Breakdown of each component and its physical/systemic role
+3. Dynamic Energy/Mass/Data Transfer mechanisms
+4. Key Equations / Physical Laws and Real-World Applications`;
+
+    setPendingUserPrompt({
+        prompt,
+        autoSend: true
+    });
+}
 
 function MermaidBlock({ code }) {
-    const clean = cleanMermaidCode(code);
-    const [svg, setSvg] = useState(() => clean ? (mermaidSvgCache.get(clean) || '') : '');
-    const [error, setError] = useState(null);
     const { openDiagramOnBoard } = useAppStore();
-    const id = useId().replace(/:/g, '-');
+    const id = useId().replace(/:/g, '');
+    const [svg, setSvg] = useState('');
+    const [error, setError] = useState(null);
+    const clean = useMemo(() => cleanMermaidCode(code), [code]);
 
     useEffect(() => {
         let isMounted = true;
         async function renderMermaid() {
             if (!clean) return;
 
-            if (mermaidSvgCache.has(clean)) {
-                setSvg(mermaidSvgCache.get(clean));
-                setError(null);
-                return;
-            }
-
-            const { svg: renderedSvg, error: renderErr } = await renderCachedMermaid(clean, `mermaid-chat-${id}`);
+            const { svg: renderedSvg, error: renderErr } = await renderMermaidFresh(clean, `mermaid-chat-${id}`);
             if (isMounted) {
                 if (renderedSvg) {
                     setSvg(renderedSvg);
@@ -58,19 +75,41 @@ function MermaidBlock({ code }) {
                     <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Flowchart / Diagram</span>
                 </div>
-                <button
-                    onClick={handleSendToBoard}
-                    className="text-[10px] font-semibold text-zinc-400 hover:text-white px-2 py-0.5 bg-zinc-800 hover:bg-emerald-950 hover:border-emerald-700/50 border border-zinc-700 rounded-lg transition-all flex items-center gap-1"
-                    title="View on Blackboard"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
-                    <span>Open on Board</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => requestDiagramTheory(clean, 'Flowchart / Diagram')}
+                        className="text-[11px] font-bold text-blue-300 hover:text-white px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded-lg transition-all flex items-center gap-1.5 shadow-sm"
+                        title="Generate in-depth technical theory for this exact diagram"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <span>Theory</span>
+                    </button>
+                    <button
+                        onClick={handleSendToBoard}
+                        className="text-[10px] font-semibold text-zinc-400 hover:text-white px-2 py-1 bg-zinc-800 hover:bg-emerald-950 hover:border-emerald-700/50 border border-zinc-700 rounded-lg transition-all flex items-center gap-1"
+                        title="View on Blackboard"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+                        <span>Open on Board</span>
+                    </button>
+                </div>
             </div>
             <div
                 className="p-4 flex items-center justify-center overflow-x-auto select-none"
                 dangerouslySetInnerHTML={{ __html: svg }}
             />
+            {/* Bottom Action Footer with Theory button below diagram */}
+            <div className="px-3 py-2 border-t border-white/5 bg-zinc-950/90 flex items-center justify-between">
+                <span className="text-[10px] text-zinc-500">Want step-by-step scientific theory?</span>
+                <button
+                    onClick={() => requestDiagramTheory(clean, 'Flowchart / Diagram')}
+                    className="px-2.5 py-1 bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-300 hover:text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                    title="Generate in-depth technical theory for this exact diagram"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <span>Theory</span>
+                </button>
+            </div>
         </div>
     );
 }
@@ -140,6 +179,15 @@ function SvgBlock({ code }) {
                     )}
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Theory Button in Header */}
+                    <button
+                        onClick={() => requestDiagramTheory(code, '2D Vector Schematic')}
+                        className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 hover:border-blue-400 text-blue-300 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                        title="Generate in-depth technical theory for this exact diagram"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <span>Theory</span>
+                    </button>
                     <button
                         onClick={handleReplay}
                         disabled={isReplaying}
@@ -152,7 +200,7 @@ function SvgBlock({ code }) {
                             <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
                             <path d="M16 21h5v-5"/>
                         </svg>
-                        <span>{isReplaying ? 'Streaming...' : 'Replay Stream'}</span>
+                        <span>{isReplaying ? 'Streaming...' : 'Replay'}</span>
                     </button>
                     <button
                         onClick={() => openDiagramOnBoard(code, '2D Vector Schematic')}
@@ -176,14 +224,25 @@ function SvgBlock({ code }) {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span>2D Vector • Live Streamed SVG</span>
                 </span>
-                <button
-                    onClick={handleReplay}
-                    disabled={isReplaying}
-                    className="hover:text-emerald-300 text-zinc-400 transition-colors flex items-center gap-1"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    <span>Re-stream Code</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    {/* Small button below diagram named Theory as requested */}
+                    <button
+                        onClick={() => requestDiagramTheory(code, '2D Vector Schematic')}
+                        className="px-2.5 py-1 bg-blue-950/90 hover:bg-blue-900 border border-blue-500/50 text-blue-300 hover:text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                        title="Generate in-depth technical theory for this exact diagram"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <span>Theory</span>
+                    </button>
+                    <button
+                        onClick={handleReplay}
+                        disabled={isReplaying}
+                        className="hover:text-emerald-300 text-zinc-400 transition-colors flex items-center gap-1"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        <span>Re-stream Code</span>
+                    </button>
+                </div>
             </div>
         </div>
     );

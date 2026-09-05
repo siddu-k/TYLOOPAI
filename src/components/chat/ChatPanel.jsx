@@ -16,7 +16,8 @@ export default function ChatPanel() {
         interviewStarted, setInterviewStarted,
         isVisualizeMode, activeConcept, setBoardDiagram,
         activeBoardDiagram, isAvatarEnabled, toggleAvatarEnabled,
-        localModels, setLocalModels
+        localModels, setLocalModels,
+        pendingUserPrompt, setPendingUserPrompt
     } = useAppStore();
 
     const [input, setInput] = useState('');
@@ -62,7 +63,7 @@ export default function ChatPanel() {
                 if (models && models.length > 0) {
                     setLocalModels(models);
                 }
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }, []);
 
@@ -88,11 +89,7 @@ export default function ChatPanel() {
     useEffect(() => {
         const store = useAppStore.getState();
         if (isVisualizeMode && activeConcept && messages.length === 0 && !isAiTyping && !activeBoardDiagram && !store.active3DCode) {
-            if (store.visualDimension === '3d') {
-                handleSend(`Create an interactive 3D spatial model for "${activeConcept}". Output verified Three.js scene code inside a javascript code block with animated kinematics.`);
-            } else {
-                handleSend(`Teach me about "${activeConcept}". Draw a detailed 2D visual schematic or Mermaid diagram on the blackboard and explain it step-by-step.`);
-            }
+            handleSend(activeConcept);
         }
     }, [isVisualizeMode, activeConcept, messages.length, isAiTyping, activeBoardDiagram]);
 
@@ -174,6 +171,25 @@ export default function ChatPanel() {
                 const newTitle = trimmed.length > 25 ? trimmed.substring(0, 25) + '...' : trimmed;
                 const updatedSessions = store.sessions.map(s => s.id === activeSession.id ? { ...s, title: newTitle } : s);
                 store.setSessions(updatedSessions);
+            }
+
+            // In Visualize mode: keep activeConcept and activeBoardTitle fresh with current topic
+            if (store.isVisualizeMode && !trimmed.startsWith('Regarding "')) {
+                let cleanTopic = trimmed;
+                const quoteMatch = trimmed.match(/"([^"]+)"|'([^']+)'/);
+                if (quoteMatch) {
+                    cleanTopic = (quoteMatch[1] || quoteMatch[2]).trim();
+                } else {
+                    cleanTopic = cleanTopic
+                        .replace(/^(teach me about|explain|draw|visualize|create a diagram of|show me|diagram of|what is|tell me about)\s+/i, '')
+                        .split(/\. |\.\n|\?|!/)[0]
+                        .replace(/["']/g, '')
+                        .trim();
+                }
+                if (cleanTopic) {
+                    store.setActiveConcept(cleanTopic);
+                    store.setActiveBoardTitle(cleanTopic);
+                }
             }
 
             // 1. Save and add User message (saveMessage internally calls addMessage)
@@ -288,6 +304,22 @@ export default function ChatPanel() {
         }
     };
 
+    // Listen for external prompts (e.g. from Canvas element/area selection)
+    useEffect(() => {
+        if (pendingUserPrompt) {
+            const promptText = typeof pendingUserPrompt === 'string' ? pendingUserPrompt : pendingUserPrompt.prompt;
+            const autoSend = typeof pendingUserPrompt === 'object' ? pendingUserPrompt.autoSend !== false : true;
+
+            if (autoSend) {
+                handleSend(promptText);
+            } else {
+                setInput(promptText);
+                inputRef.current?.focus();
+            }
+            setPendingUserPrompt(null);
+        }
+    }, [pendingUserPrompt]);
+
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -374,18 +406,6 @@ export default function ChatPanel() {
                                 </select>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2 pointer-events-none text-zinc-500"><path d="m6 9 6 6 6-6" /></svg>
                             </div>
-
-                            {isGeminiModel(selectedModel) ? (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                                    Google Cloud
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                    Local Offline
-                                </span>
-                            )}
                         </div>
                     </div>
 

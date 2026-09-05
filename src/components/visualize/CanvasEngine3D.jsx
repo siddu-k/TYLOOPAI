@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
 import useAppStore from '../../stores/appStore.js';
 import StateHUD from './StateHUD.jsx';
+import './CanvasEngine3D.css';
 
 // Create an extensible THREE proxy for generated scripts (ES modules are non-extensible)
 const threeExtended = new Proxy(THREE, {
@@ -60,7 +61,7 @@ export default function CanvasEngine3D({ code: propCode }) {
   const gridHelperRef = useRef(null);
   const elapsedTimeRef = useRef(0);
 
-  const { active3DCode, isAiTyping } = useAppStore();
+  const { active3DCode, isAiTyping, activeConcept } = useAppStore();
   const current3DCode = propCode || active3DCode;
   const visualization = current3DCode ? { type: 'javascript', code: current3DCode } : null;
   const isGenerating = isAiTyping;
@@ -301,18 +302,24 @@ export default function CanvasEngine3D({ code: propCode }) {
     };
     animate();
 
-    // 9. Resize handler
+    // 9. Resize handler with ResizeObserver
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
+      const w = container.clientWidth || 800;
+      const h = container.clientHeight || 600;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(container);
     window.addEventListener('resize', handleResize);
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
       controls.dispose();
@@ -484,6 +491,8 @@ export default function CanvasEngine3D({ code: propCode }) {
       buildDemoScene(group);
       return;
     }
+
+    const type = (data.type || '').toLowerCase();
 
     // 1. Dynamic Live Generative 3D Mesh / Three.js Code Runner (PRIMARY)
     if (data.code || data.threeCode || type === 'three' || type === 'javascript' || type === 'js') {
@@ -1410,6 +1419,17 @@ export default function CanvasEngine3D({ code: propCode }) {
         transition: 'background-color 0.2s ease',
       }}
     >
+      {/* 3D Model HUD / Status Bar (Top-Left) */}
+      <div className="canvas-3d-model-badge">
+        <span className="model-status-dot" />
+        <span className="model-title">
+          {activeConcept ? activeConcept : '3D Spatial Engine'}
+        </span>
+        <span className="model-sub">
+          Interactive 3-Axis
+        </span>
+      </div>
+
       {/* Live AI Synthesizing Shimmer Screen */}
       {isGenerating && (
         <div className="canvas-generating-overlay">
@@ -1421,14 +1441,20 @@ export default function CanvasEngine3D({ code: propCode }) {
               <div className="orbital-core" />
             </div>
             <div className="canvas-generating-header">
-              <span className="canvas-generating-tag">3D SPATIAL ENGINE</span>
+              <span className="canvas-generating-tag">
+                <span className="generating-pulse-dot" />
+                3D SPATIAL ENGINE
+              </span>
               <h3 className="canvas-generating-title">Synthesizing 3D Spatial Geometry...</h3>
               <p className="canvas-generating-desc">
-                Calculating 3-axis orbital matrices, volumetric meshes & volumetric shaders
+                Calculating 3-axis orbital matrices, volumetric meshes & kinematic shaders
               </p>
             </div>
             <div className="canvas-generating-shimmer-track">
               <div className="canvas-generating-shimmer-bar" />
+            </div>
+            <div className="canvas-generating-status">
+              <span className="generating-step-text">Assembling Three.js scene graph...</span>
             </div>
           </div>
         </div>

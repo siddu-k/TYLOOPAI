@@ -148,6 +148,9 @@ const useAppStore = create((set, get) => ({
     currentSession: null,
     messages: [],
     isAiTyping: false,
+    pendingUserPrompt: null,
+
+    setPendingUserPrompt: (prompt) => set({ pendingUserPrompt: prompt }),
 
     setSessions: (sessions) => {
         set({ sessions });
@@ -262,10 +265,13 @@ const useAppStore = create((set, get) => ({
         });
         // Keeps the existing active session and messages!
     },
+    setActiveConcept: (concept) => set({ activeConcept: concept }),
+    setActiveBoardTitle: (title) => set({ activeBoardTitle: title }),
+
     setBoardDiagram: (diagram, title = '') => {
         set((state) => ({
             activeBoardDiagram: diagram,
-            activeBoardTitle: title || state.activeBoardTitle || 'Visual Explanation'
+            activeBoardTitle: title ? title : state.activeBoardTitle
         }));
     },
 
@@ -287,11 +293,11 @@ const useAppStore = create((set, get) => ({
         if (deck) {
             saveStorage('tyloop_active_ppt', deck);
             const title = deck.topic || deck.title || 'Presentation';
-            
+
             // Create a dedicated chat session for this slide deck
             const newSession = get().createSession(`Deck: ${title.substring(0, 24)}`);
             newSession.pptDeck = deck;
-            
+
             // Update session in sessions list with pptDeck metadata
             set((state) => {
                 const updatedSessions = state.sessions.map(s => s.id === newSession.id ? { ...s, pptDeck: deck } : s);
@@ -354,7 +360,7 @@ const useAppStore = create((set, get) => ({
         if (quiz) {
             saveStorage('tyloop_active_quiz', quiz);
             const topic = quiz.topic || quiz.title || 'Technical Assessment';
-            
+
             // Create a dedicated chat session for this quiz
             const newSession = get().createSession(`Quiz: ${topic.substring(0, 24)}`);
             newSession.quiz = quiz;

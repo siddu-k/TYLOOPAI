@@ -1,10 +1,8 @@
 import mermaid from 'mermaid';
 
-// Global in-memory cache for rendered Mermaid SVGs
-export const mermaidSvgCache = new Map();
-
 /**
  * Clean and auto-repair raw mermaid code with comprehensive edge/node label quoting
+ * NO CACHING — always renders fresh
  */
 export function cleanMermaidCode(raw) {
     if (!raw) return '';
@@ -127,23 +125,18 @@ export function cleanMermaidCode(raw) {
 }
 
 /**
- * Render or retrieve cached SVG for mermaid diagram code
+ * Render mermaid diagram code FRESH every time — no caching
  */
-export async function renderCachedMermaid(code, prefix = 'mermaid') {
+export async function renderMermaidFresh(code, prefix = 'mermaid') {
     const clean = cleanMermaidCode(code);
     if (!clean) return { svg: '', error: null };
-
-    if (mermaidSvgCache.has(clean)) {
-        return { svg: mermaidSvgCache.get(clean), error: null, cached: true };
-    }
 
     // Attempt 1: Standard render
     try {
         await mermaid.parse(clean, { suppressErrors: true });
         const uniqueId = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
         const { svg } = await mermaid.render(uniqueId, clean);
-        mermaidSvgCache.set(clean, svg);
-        return { svg, error: null, cached: false };
+        return { svg, error: null };
     } catch (err) {
         // Attempt 2: Strip problematic quotes on arrow edge text and node names
         try {
@@ -151,14 +144,12 @@ export async function renderCachedMermaid(code, prefix = 'mermaid') {
                 .replace(/--\s*"([^"]+)"\s*-->/g, '-- "$1" -->')
                 .replace(/--\s*([^-\s][^->\n]*?)\s*-->/g, '-- "$1" -->')
                 .replace(/\|([^|\r\n]+)\|/g, (m, inner) => `|"${inner.replace(/["']/g, '').trim()}"|`)
-                .replace(/\{([^}\r\n]+)\}/g, (m, inner) => `{"${inner.replace(/["'{}]/g, ' ').trim()}"}`)
-                .replace(/(?<!\()\[([^\]\r\n]+)\](?!\))/g, (m, inner) => `["${inner.replace(/["'\[\]]/g, ' ').trim()}"]`);
+                .replace(/\{([^}\r\n]+)\}/g, (m, inner) => `{"${inner.replace(/["'{}]/g, ' ').trim()}"}`);
 
             await mermaid.parse(fallbackCode, { suppressErrors: true });
             const uniqueId = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
             const { svg } = await mermaid.render(uniqueId, fallbackCode);
-            mermaidSvgCache.set(clean, svg);
-            return { svg, error: null, cached: false };
+            return { svg, error: null };
         } catch (e2) {
             // Attempt 3: Ultimate alphanumeric sanitize fallback
             try {
@@ -170,11 +161,15 @@ export async function renderCachedMermaid(code, prefix = 'mermaid') {
                 await mermaid.parse(stripCode, { suppressErrors: true });
                 const uniqueId = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
                 const { svg } = await mermaid.render(uniqueId, stripCode);
-                mermaidSvgCache.set(clean, svg);
-                return { svg, error: null, cached: false };
+                return { svg, error: null };
             } catch (e3) {
-                return { svg: '', error: err.message || 'Diagram syntax error', cached: false };
+                return { svg: '', error: err.message || 'Diagram syntax error' };
             }
         }
     }
 }
+
+// Legacy exports for backward compatibility — renderCachedMermaid now just calls renderMermaidFresh
+export const renderCachedMermaid = renderMermaidFresh;
+// Empty dummy cache that's never used — keeps old imports working without errors
+export const mermaidSvgCache = { has: () => false, get: () => undefined, set: () => {}, delete: () => {} };

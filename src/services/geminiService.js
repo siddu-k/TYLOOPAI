@@ -303,8 +303,11 @@ DIRECTIONS:
    - For system structures & relationships: Use standard \`classDiagram\` or \`erDiagram\`.
    - For trees & graphs: Use standard \`graph TD\` or \`graph LR\`.
 
-4. EXPLANATION:
-   - Follow underneath with a concise, clear teacher explanation and step-by-step intuition in plain text.
+4. STRICT ZERO-THEORY POLICY:
+   - Output ONLY a single-line heading (e.g. \`### [Topic] Diagram\`).
+   - IMMEDIATELY output the \`\`\`mermaid diagram code.
+   - DO NOT provide long theory, essays, or paragraphs upfront unless the user explicitly requests theory.
+   - DO NOT DEVIATE from the requested diagram topic. Focus 100% of tokens on diagram accuracy.
 
 Zero errors. Clean, standard Mermaid diagrams enclosed in triple backticks only!`;
     }
@@ -324,6 +327,7 @@ Zero errors. Clean, standard Mermaid diagrams enclosed in triple backticks only!
             contents,
             config: {
                 systemInstruction: systemPrompt,
+                temperature: 0.7,
             }
         });
 

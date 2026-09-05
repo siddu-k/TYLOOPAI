@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import useAppStore from '../../stores/appStore';
 import { speak, stopSpeaking } from '../../services/voiceService';
-import { renderCachedMermaid, cleanMermaidCode } from '../../services/mermaidCache';
+import { renderMermaidFresh, cleanMermaidCode } from '../../services/mermaidCache';
 
 function QuizMermaidBlock({ code }) {
     const [svg, setSvg] = useState('');
@@ -15,7 +15,7 @@ function QuizMermaidBlock({ code }) {
         let isMounted = true;
         async function render() {
             if (!clean) return;
-            const { svg: renderedSvg } = await renderCachedMermaid(clean, 'quiz-mermaid-' + Math.random().toString(36).substring(7));
+            const { svg: renderedSvg } = await renderMermaidFresh(clean, 'quiz-mermaid-' + Math.random().toString(36).substring(7));
             if (isMounted && renderedSvg) {
                 setSvg(renderedSvg);
             }

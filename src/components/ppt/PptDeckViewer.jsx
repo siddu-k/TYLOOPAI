@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import useAppStore from '../../stores/appStore';
-import { renderCachedMermaid, cleanMermaidCode } from '../../services/mermaidCache';
+import { renderMermaidFresh, cleanMermaidCode } from '../../services/mermaidCache';
 import { speak, stopSpeaking, isSpeaking } from '../../services/voiceService';
 import PptLiveChat from './PptLiveChat';
 
@@ -77,7 +77,7 @@ export default function PptDeckViewer() {
             }
 
             const cleanCode = cleanMermaidCode(currentSlide.diagram);
-            const { svg, error } = await renderCachedMermaid(cleanCode, `ppt-slide-${currentSlideIndex}`);
+            const { svg, error } = await renderMermaidFresh(cleanCode, `ppt-slide-${currentSlideIndex}`);
             if (isMounted) {
                 if (svg) {
                     setDiagramSvg(svg);

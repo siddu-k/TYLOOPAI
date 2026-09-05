@@ -237,7 +237,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Live 2D Board or 3D Spatial Canvas */}
-                            <div className="flex-1 min-h-0 relative rounded-2xl border border-zinc-800/80 bg-zinc-950">
+                            <div className="flex-1 min-h-0 relative rounded-2xl border border-zinc-800/80 bg-zinc-950 overflow-hidden">
                                 {visualDimension === '3d' ? (
                                     <CanvasEngine3D code={active3DCode} />
                                 ) : (
