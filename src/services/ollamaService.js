@@ -241,12 +241,15 @@ ${messages.slice(0, 5).map((m) => `${m.role}: ${m.content}`).join('\n')}
  */
 export async function listLocalModels() {
     try {
-        const response = await fetch(`${OLLAMA_URL}/api/tags`);
-        if (!response.ok) throw new Error('Failed to fetch models');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const response = await fetch(`${OLLAMA_URL}/api/tags`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!response.ok) return [];
         const data = await response.json();
         return data.models || [];
-    } catch (e) {
-        console.error('List models error:', e);
+    } catch {
+        // Ollama local service is offline or not installed; return empty array cleanly
         return [];
     }
 }

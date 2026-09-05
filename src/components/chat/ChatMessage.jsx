@@ -12,13 +12,15 @@ function requestDiagramTheory(diagramCode, label = 'Diagram') {
     const { setPendingUserPrompt, activeConcept, activeBoardTitle } = useAppStore.getState();
     const topic = activeConcept || activeBoardTitle || label;
     const cleanSnippet = diagramCode ? diagramCode.trim().slice(0, 2500) : '';
-    const prompt = `Please provide a thorough scientific theory and step-by-step technical breakdown for ${topic} based on this exact diagram:
+    const prompt = `Please provide a thorough scientific theory and step-by-step technical breakdown for "${topic}" based on this exact diagram:
 
 \`\`\`
 ${cleanSnippet}
 \`\`\`
 
-Explain in detail:
+IMPORTANT INSTRUCTIONS:
+- Explain in detail using clear technical prose, bullet points, and equations.
+- Do NOT output or repeat any diagram code, SVG code, or Three.js code blocks in your reply. Provide ONLY the scientific theory:
 1. Core Theory & Fundamental Governing Principles
 2. Step-by-Step Breakdown of each component and its physical/systemic role
 3. Dynamic Energy/Mass/Data Transfer mechanisms
@@ -265,6 +267,63 @@ function ensureMermaidFences(text) {
     return text;
 }
 
+function renderUserMessageContent(content) {
+    if (!content) return null;
+
+    // Detect if this prompt is a Theory request containing an embedded diagram/3D code block
+    const isTheoryRequest =
+        content.includes('Please provide a thorough scientific theory') ||
+        content.includes('based on this exact diagram') ||
+        content.includes('based on this exact 3D spatial model');
+
+    if (isTheoryRequest) {
+        // Extract topic
+        const topicMatch = content.match(/for ["']?([^"'\n:]+)["']? based on/i);
+        const topic = topicMatch ? topicMatch[1].trim() : '';
+
+        // Completely hide the embedded code block from chat display!
+        const cleanedText = content
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/IMPORTANT INSTRUCTIONS:[\s\S]*?(?=(?:1\. Core Theory|Explain in detail|\n\n|$))/i, '')
+            .replace(/\n\s*\n\s*\n/g, '\n\n')
+            .trim();
+
+        return (
+            <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-900 font-semibold text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    <span>Theory Request {topic ? `• ${topic}` : ''}</span>
+                    <span className="text-[10px] text-zinc-500 font-normal ml-0.5">(Model code attached to AI)</span>
+                </div>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-900 font-medium">
+                    {cleanedText}
+                </p>
+            </div>
+        );
+    }
+
+    // Also check if any other user message has an embedded code block (e.g. selection context with diagram/SVG)
+    if (content.includes('```')) {
+        const withoutCode = content.replace(/```[\s\S]*?```/g, '').replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+        if (withoutCode) {
+            return (
+                <div className="space-y-1.5">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-900">{withoutCode}</p>
+                    <div className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-200/70 px-2 py-0.5 rounded-md font-mono">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                        <span>[ Attached code hidden from chat ]</span>
+                    </div>
+                </div>
+            );
+        }
+    }
+
+    return <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-900">{content}</p>;
+}
+
 export default function ChatMessage({ message, isTyping }) {
     const isUser = message.role === 'user';
     const { isSpeaking, setIsSpeaking, openDiagramOnBoard, open3DOnBoard, startPptMode, startQuizMode } = useAppStore();
@@ -346,7 +405,7 @@ export default function ChatMessage({ message, isTyping }) {
                 {/* Content */}
                 {message.content ? (
                     isUser ? (
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                        renderUserMessageContent(message.content)
                     ) : (
                         <div>
                             <div className="chat-markdown text-sm leading-relaxed">
@@ -474,12 +533,36 @@ export default function ChatMessage({ message, isTyping }) {
                                                                     <p className="text-xs text-zinc-400 mt-0.5">Interactive Three.js 3D model is ready</p>
                                                                 </div>
                                                             </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {/* Theory Button for 3D */}
+                                                                <button
+                                                                    onClick={() => requestDiagramTheory(codeContent, '3D Spatial Model')}
+                                                                    className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-purple-500/50 text-zinc-300 hover:text-purple-300 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
+                                                                    title="Generate in-depth technical theory for this 3D model"
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                                                    <span>Theory</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => open3DOnBoard(codeContent, '3D Spatial Scene')}
+                                                                    className="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white hover:text-black font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                                                                >
+                                                                    <span>Open in 3D Viewer</span>
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Bottom footer with Theory helper */}
+                                                        <div className="mt-2.5 pt-2 border-t border-indigo-500/20 flex items-center justify-between">
+                                                            <span className="text-[10px] text-zinc-400">Want step-by-step scientific theory?</span>
                                                             <button
-                                                                onClick={() => open3DOnBoard(codeContent, '3D Spatial Scene')}
-                                                                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white hover:text-black font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                                                                onClick={() => requestDiagramTheory(codeContent, '3D Spatial Model')}
+                                                                className="px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/40 text-indigo-300 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
+                                                                title="Generate in-depth technical theory for this 3D model"
                                                             >
-                                                                <span>Open in 3D Viewer</span>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                                                <span>Theory</span>
                                                             </button>
                                                         </div>
                                                     </div>

@@ -722,7 +722,9 @@ ${currentTopic ? `- Current Diagram Topic: ${currentTopic}` : ''}
 ${cleanSnippet}
 \`\`\`
 
-Explain in detail:
+IMPORTANT INSTRUCTIONS:
+- Explain in detail using clear technical prose, bullet points, and equations.
+- Do NOT output or repeat any diagram code, SVG code, or Three.js code blocks in your reply. Provide ONLY the scientific theory:
 1. Core Theory & Fundamental Governing Principles
 2. Step-by-Step Breakdown of each component and its physical/systemic role
 3. Dynamic Energy/Mass/Data Transfer mechanisms

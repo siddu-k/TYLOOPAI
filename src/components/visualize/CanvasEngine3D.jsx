@@ -22,6 +22,7 @@ const threeExtended = new Proxy(THREE, {
  * volumetric data structures, 3D neural layers, network graphs, and procedural meshes.
  */
 export default function CanvasEngine3D({ code: propCode }) {
+  const wrapperRef = useRef(null);
   const mountRef = useRef(null);
   const gizmoMountRef = useRef(null);
   const sceneRef = useRef(null);
@@ -36,6 +37,9 @@ export default function CanvasEngine3D({ code: propCode }) {
   const gizmoRendererRef = useRef(null);
   const gizmoSceneRef = useRef(null);
   const gizmoCameraRef = useRef(null);
+
+  // Model bounds for accurate camera preset framing
+  const modelBoundsRef = useRef({ center: new THREE.Vector3(0, 0, 0), distance: 45 });
 
   const [autoRotate, setAutoRotate] = useState(false);
   const [wireframe, setWireframe] = useState(false);
@@ -52,6 +56,16 @@ export default function CanvasEngine3D({ code: propCode }) {
   const [showEnvMenu, setShowEnvMenu] = useState(false);
   const [showLightingMenu, setShowLightingMenu] = useState(false);
   const [showViewsMenu, setShowViewsMenu] = useState(false);
+
+  // Refs for animation loop so toggling pause/speed does NOT destroy the scene
+  const isPausedRef = useRef(isPaused);
+  const animSpeedRef = useRef(animSpeed);
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+  useEffect(() => {
+    animSpeedRef.current = animSpeed;
+  }, [animSpeed]);
 
   // Lighting & Grid Refs
   const ambientLightRef = useRef(null);
@@ -72,19 +86,20 @@ export default function CanvasEngine3D({ code: propCode }) {
   const fitCameraToBounds = useCallback((targetGroup) => {
     const camera = cameraRef.current;
     const controls = controlsRef.current;
-    if (!camera || !controls || !targetGroup || targetGroup.children.length === 0) return;
+    const group = targetGroup || contentGroupRef.current || sceneRef.current;
+    if (!camera || !controls || !group) return;
 
     const box = new THREE.Box3();
     let hasMeshes = false;
-    targetGroup.traverse((child) => {
-      if (child.isMesh && child.geometry) {
+    group.traverse((child) => {
+      if (child.isMesh && child.geometry && child.name !== 'gridHelper' && child.name !== 'axesHelper') {
         box.expandByObject(child);
         hasMeshes = true;
       }
     });
 
     if (!hasMeshes) {
-      box.setFromObject(targetGroup);
+      box.setFromObject(group);
     }
 
     if (box.isEmpty()) return;
@@ -98,7 +113,9 @@ export default function CanvasEngine3D({ code: propCode }) {
 
     const fov = camera.fov * (Math.PI / 180);
     let cameraDistance = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.35;
-    cameraDistance = Math.max(cameraDistance, 6);
+    cameraDistance = Math.max(cameraDistance, 8);
+
+    modelBoundsRef.current = { center, distance: cameraDistance };
 
     controls.target.copy(center);
     camera.position.set(center.x + cameraDistance * 0.7, center.y + cameraDistance * 0.55, center.z + cameraDistance * 0.7);
@@ -221,6 +238,7 @@ export default function CanvasEngine3D({ code: propCode }) {
     const gridHelper = new THREE.GridHelper(80, 40, 0x4f46e5, 0x1e1b4b);
     gridHelper.position.y = -10;
     gridHelper.name = 'gridHelper';
+    gridHelper.visible = showGrid;
     scene.add(gridHelper);
     gridHelperRef.current = gridHelper;
 
@@ -275,14 +293,15 @@ export default function CanvasEngine3D({ code: propCode }) {
       const currentTime = performance.now();
       const rawDelta = Math.min((currentTime - prevTime) / 1000, 0.1);
       prevTime = currentTime;
-      const delta = isPaused ? 0 : rawDelta * animSpeed;
+      const currentSpeed = typeof animSpeedRef.current === 'number' ? animSpeedRef.current : 1;
+      const delta = isPausedRef.current ? 0 : rawDelta * currentSpeed;
       elapsedTimeRef.current += delta;
       const time = elapsedTimeRef.current;
 
       controls.update();
 
       // Animate active parts & kinematic scripts
-      if (!isPaused && animatedObjectsRef.current.length > 0) {
+      if (!isPausedRef.current && animatedObjectsRef.current.length > 0) {
         animatedObjectsRef.current.forEach((obj) => {
           if (obj.userData?.update) {
             obj.userData.update(time, delta);
@@ -325,7 +344,7 @@ export default function CanvasEngine3D({ code: propCode }) {
       controls.dispose();
       renderer.dispose();
     };
-  }, [isPaused, animSpeed]);
+  }, []);
 
   // ── Dynamic Background Environment Updater ────────────────
   useEffect(() => {
@@ -413,6 +432,9 @@ export default function CanvasEngine3D({ code: propCode }) {
 
   // ── Toggle Grid Floor ──────────────────────────────────────
   useEffect(() => {
+    if (gridHelperRef.current) {
+      gridHelperRef.current.visible = showGrid;
+    }
     if (sceneRef.current) {
       const grid = sceneRef.current.getObjectByName('gridHelper');
       if (grid) grid.visible = showGrid;
@@ -421,9 +443,10 @@ export default function CanvasEngine3D({ code: propCode }) {
 
   // ── Toggle Wireframe Mode ──────────────────────────────────
   useEffect(() => {
-    if (contentGroupRef.current) {
-      contentGroupRef.current.traverse((child) => {
-        if (child.isMesh && child.material) {
+    const root = sceneRef.current;
+    if (root) {
+      root.traverse((child) => {
+        if (child.isMesh && child.material && child.name !== 'gridHelper' && child.name !== 'axesHelper') {
           if (Array.isArray(child.material)) {
             child.material.forEach((m) => (m.wireframe = wireframe));
           } else {
@@ -441,30 +464,34 @@ export default function CanvasEngine3D({ code: propCode }) {
     if (!camera || !controls) return;
 
     setActivePreset(preset);
-    controls.target.set(0, 0, 0);
+    const bounds = modelBoundsRef.current || { center: new THREE.Vector3(0, 0, 0), distance: 45 };
+    const center = bounds.center || new THREE.Vector3(0, 0, 0);
+    const dist = bounds.distance || 45;
+
+    controls.target.copy(center);
 
     switch (preset) {
       case 'iso': // Isometric 3D
-        camera.position.set(32, 32, 32);
+        camera.position.set(center.x + dist * 0.7, center.y + dist * 0.7, center.z + dist * 0.7);
         break;
       case 'top': // Top XY Plane
-        camera.position.set(0, 55, 0.001);
+        camera.position.set(center.x, center.y + dist, center.z + 0.001);
         break;
       case 'front': // Front XZ Plane
-        camera.position.set(0, 0, 55);
+        camera.position.set(center.x, center.y, center.z + dist);
         break;
       case 'side': // Side YZ Plane
-        camera.position.set(55, 0, 0);
+        camera.position.set(center.x + dist, center.y, center.z);
         break;
       case 'bottom': // Bottom -XY Plane
-        camera.position.set(0, -55, 0.001);
+        camera.position.set(center.x, center.y - dist, center.z + 0.001);
         break;
       case 'perspective':
       default:
-        camera.position.set(35, 28, 42);
+        camera.position.set(center.x + dist * 0.7, center.y + dist * 0.55, center.z + dist * 0.7);
         break;
     }
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(center);
     controls.update();
   }, []);
 
@@ -543,15 +570,26 @@ export default function CanvasEngine3D({ code: propCode }) {
       buildVolumetricFallback(group, data);
     }
 
+    // Apply current wireframe and label states to newly generated geometry
+    if (wireframe) {
+      group.traverse((child) => {
+        if (child.isMesh && child.material) {
+          if (Array.isArray(child.material)) child.material.forEach((m) => (m.wireframe = true));
+          else child.material.wireframe = true;
+        }
+      });
+    }
+
     // Auto-focus camera on the generated 3D bounds
     fitCameraToBounds(group);
-  }, [visualization, wireframe]);
+  }, [visualization]);
 
   // ── Toggle Label Annotations Visibility ────────────────────
   useEffect(() => {
-    if (contentGroupRef.current) {
-      contentGroupRef.current.traverse((child) => {
-        if (child.isSprite || child.name === 'labelSprite') {
+    const root = sceneRef.current;
+    if (root) {
+      root.traverse((child) => {
+        if (child.isSprite || child.name === 'labelSprite' || child.type === 'Sprite') {
           child.visible = showLabels;
         }
       });
@@ -1343,7 +1381,25 @@ export default function CanvasEngine3D({ code: propCode }) {
       `
       );
 
-      runFn(threeExtended, sceneRef.current, group, createTextSprite, onAnimate, wireframe, cameraRef.current, controlsRef.current);
+      // Safe scene proxy so that if an AI script calls scene.add(mesh), it redirects to group!
+      const sceneProxy = new Proxy(sceneRef.current, {
+        get(target, prop) {
+          if (prop === 'add') {
+            return (...args) => {
+              args.forEach((item) => {
+                if (item && (item.isLight || item.isCamera)) {
+                  target.add(item);
+                } else if (item) {
+                  group.add(item);
+                }
+              });
+            };
+          }
+          return target[prop];
+        },
+      });
+
+      runFn(threeExtended, sceneProxy, group, createTextSprite, onAnimate, wireframe, cameraRef.current, controlsRef.current);
     } catch (err) {
       console.warn('Failed to compile 3D script:', err);
       buildDemoScene(group);
@@ -1379,6 +1435,33 @@ export default function CanvasEngine3D({ code: propCode }) {
     });
   };
 
+  // ── Production Action: Request Complete Scientific Theory for Active 3D Model ──
+  const handleRequest3DTheory = useCallback(() => {
+    if (isGenerating) return;
+    const { setPendingUserPrompt } = useAppStore.getState();
+    const topic = activeConcept || 'this 3D spatial model';
+    const codeSnippet = current3DCode ? current3DCode.trim().slice(0, 2500) : '';
+
+    const prompt = `Please provide a thorough scientific theory and step-by-step technical breakdown for "${topic}" based on this exact 3D spatial model:
+
+\`\`\`javascript
+${codeSnippet}
+\`\`\`
+
+IMPORTANT INSTRUCTIONS:
+- Explain in detail using clear technical prose, bullet points, and equations.
+- Do NOT output or repeat any 3D scene code, JavaScript code, or Three.js code blocks in your reply. Provide ONLY the scientific theory:
+1. Core Theory & Fundamental Governing Scientific/Mathematical Principles
+2. 3-Axis Spatial Architecture & Geometric Component Roles
+3. Kinematics, Forces & Dynamic Interaction Mechanisms
+4. Real-World Applications, Calculations & Mathematical Formulations`;
+
+    setPendingUserPrompt({
+      prompt,
+      autoSend: true,
+    });
+  }, [activeConcept, current3DCode, isGenerating]);
+
   // ── Export High-Resolution 3D PNG ──────────────────────────
   const export3DPNG = useCallback(() => {
     const renderer = rendererRef.current;
@@ -1398,7 +1481,7 @@ export default function CanvasEngine3D({ code: propCode }) {
 
   // ── Fullscreen Toggle ──────────────────────────────────────
   const toggleFullscreen = useCallback(() => {
-    const container = mountRef.current;
+    const container = wrapperRef.current || mountRef.current;
     if (!container) return;
     if (!document.fullscreenElement) {
       container.requestFullscreen().catch(() => {});
@@ -1409,6 +1492,7 @@ export default function CanvasEngine3D({ code: propCode }) {
 
   return (
     <div
+      ref={wrapperRef}
       className="canvas-container canvas-3d-wrapper"
       style={{
         width: '100%',
@@ -1492,7 +1576,12 @@ export default function CanvasEngine3D({ code: propCode }) {
       </div>
 
       {/* ── 3D Camera & Viewport Control Suite (Horizontal Bottom Dock) ── */}
-      <div className="canvas-3d-bottom-dock">
+      <div
+        className="canvas-3d-bottom-dock"
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Environment Backdrop Selector */}
         <div className="toolbar-menu-wrapper" style={{ position: 'relative' }}>
           <button
@@ -1538,6 +1627,7 @@ export default function CanvasEngine3D({ code: propCode }) {
                       e.preventDefault();
                       e.stopPropagation();
                       setBgColor(swatch.color);
+                      setShowEnvMenu(false);
                     }}
                     style={{ background: swatch.color }}
                     title={swatch.name}
@@ -1781,6 +1871,31 @@ export default function CanvasEngine3D({ code: propCode }) {
             <line x1="12" y1="2" x2="12" y2="22" />
             <path d="M20 20L4 4" />
           </svg>
+        </button>
+
+        <div className="toolbar-separator" />
+
+        {/* Theory Generator for Active 3D Model */}
+        <button
+          className="canvas-3d-dock-btn theory-3d-dock-btn"
+          onClick={handleRequest3DTheory}
+          data-tooltip="Generate in-depth scientific theory for this 3D model"
+          aria-label="Generate Theory"
+          style={{
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(168, 85, 247, 0.28))',
+            border: '1px solid rgba(168, 85, 247, 0.6)',
+            color: '#c084fc',
+            fontWeight: 700,
+            gap: '6px',
+            padding: '0 12px',
+            boxShadow: '0 0 12px rgba(168, 85, 247, 0.35)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <span>Theory</span>
         </button>
 
         <div className="toolbar-separator" />
