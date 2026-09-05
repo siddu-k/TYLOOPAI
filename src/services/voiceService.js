@@ -1,12 +1,21 @@
 /**
- * Voice Service — Web Speech API wrappers for STT and TTS
+ * Voice Service — Universal Web Speech API implementation for STT and TTS
+ * Features real-time phoneme lip-syncing, sentence chunking, and Edge/Chrome keep-alive.
  */
+
+import {
+    lipsyncManager,
+    startSyntheticSpeech,
+    stopSyntheticSpeech,
+    updateSyntheticWord,
+} from './lipsyncService';
+import useAppStore from '../stores/appStore';
 
 // ─── Speech-to-Text ───
 let recognition = null;
 
 export function isSTTSupported() {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    return typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 
 export function startListening(onResult, onEnd, onError) {
@@ -33,7 +42,7 @@ export function startListening(onResult, onEnd, onError) {
                 interim += transcript;
             }
         }
-        onResult?.(finalTranscript || interim, !!(finalTranscript));
+        onResult?.(finalTranscript || interim, !!finalTranscript);
     };
 
     recognition.onend = () => {
@@ -57,35 +66,75 @@ export function stopListening() {
     }
 }
 
-import { lipsyncManager } from './lipsyncService';
-import useAppStore from '../stores/appStore';
-
-// ─── Text-to-Speech ───
-let currentAudio = null;
-let audioQueue = [];
+// ─── Text-to-Speech (Web Speech API) ───
+let speechQueue = [];
 let isAudioPlaying = false;
 let onEndGlobal = null;
+let keepAliveTimer = null;
+let cachedVoices = [];
+
+// Initialize voices eagerly and cache them
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+    cachedVoices = window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => {
+        cachedVoices = window.speechSynthesis.getVoices();
+    };
+}
 
 export function isTTSSupported() {
-    return true;
+    return typeof window !== 'undefined' && !!window.speechSynthesis;
 }
 
 export function getSystemVoices() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-        return window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+        const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+        return voices.filter(v => v.lang.startsWith('en'));
     }
     return [];
 }
 
-// Helper to chunk text for free TTS API limits
+/**
+ * Pick the best sounding voice (prioritizing natural/neural English voices)
+ */
+function pickBestVoice(preferredName) {
+    const voices = getSystemVoices();
+    if (voices.length === 0) return null;
+
+    if (preferredName) {
+        const match = voices.find(v => v.name === preferredName || v.voiceURI === preferredName);
+        if (match) return match;
+    }
+
+    // Prioritize natural / Google / Edge neural voices
+    const natural = voices.find(v =>
+        (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Jenny') || v.name.includes('Aria') || v.name.includes('Guy')) &&
+        (v.lang === 'en-US' || v.lang === 'en-GB')
+    );
+    if (natural) return natural;
+
+    const enUS = voices.find(v => v.lang === 'en-US');
+    if (enUS) return enUS;
+
+    return voices[0];
+}
+
+/**
+ * Helper to split text into manageable sentences for natural pauses and avoiding Chrome's 15s freeze
+ */
 function chunkText(text) {
-    const regex = /[^.?!]+[.?!]+|[^.?!]+$/g;
-    return text.match(regex) || [text];
+    const regex = /[^.?!;:\n]+[.?!;:\n]+|[^.?!;:\n]+$/g;
+    const matches = text.match(regex);
+    if (!matches) return [text];
+    return matches.map(s => s.trim()).filter(s => s.length > 0);
 }
 
 function playNextChunk() {
-    if (audioQueue.length === 0) {
+    if (speechQueue.length === 0) {
         isAudioPlaying = false;
+        clearInterval(keepAliveTimer);
+        keepAliveTimer = null;
+        stopSyntheticSpeech();
+
         if (onEndGlobal) {
             const cb = onEndGlobal;
             onEndGlobal = null;
@@ -94,73 +143,131 @@ function playNextChunk() {
         return;
     }
 
-    const chunk = audioQueue.shift();
+    const chunk = speechQueue.shift();
     const { voiceSettings } = useAppStore.getState();
     const rate = voiceSettings?.rate || 1.05;
+    const pitch = voiceSettings?.pitch || 1.0;
     const volume = voiceSettings?.volume ?? 1.0;
 
-    // Use the Vite proxy `/api/tts` to bypass CORS for free high-quality human-like voice
-    const url = `/api/tts/translate_tts?ie=UTF-8&tl=en-US&client=tw-ob&q=${encodeURIComponent(chunk.substring(0, 200))}`;
+    const utterance = new SpeechSynthesisUtterance(chunk);
+    utterance.rate = Math.min(2.0, Math.max(0.5, rate));
+    utterance.pitch = Math.min(1.8, Math.max(0.5, pitch));
+    utterance.volume = Math.min(1.0, Math.max(0.0, volume));
 
-    currentAudio = new Audio(url);
-    currentAudio.crossOrigin = "anonymous"; // Required for Web Audio API Analyzer
-    currentAudio.playbackRate = Math.min(2.0, Math.max(0.5, rate));
-    currentAudio.volume = Math.min(1.0, Math.max(0.0, volume));
+    const selectedVoice = pickBestVoice(voiceSettings?.voiceName);
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
 
-    currentAudio.onended = () => {
+    utterance.onstart = () => {
+        isAudioPlaying = true;
+    };
+
+    // Drive 3D avatar lip-sync accurately on word boundaries
+    utterance.onboundary = (event) => {
+        if (event.name === 'word') {
+            const word = chunk.substring(event.charIndex, event.charIndex + (event.charLength || 6)).trim();
+            updateSyntheticWord(word);
+        }
+    };
+
+    utterance.onend = () => {
         playNextChunk();
     };
 
-    currentAudio.onerror = (e) => {
-        console.error("TTS Audio error", e);
-        playNextChunk(); // Skip chunk on error
+    utterance.onerror = (e) => {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            console.warn('Speech synthesis chunk error:', e.error);
+        }
+        playNextChunk();
     };
 
-    // Connect this physical audio element to the lipsync manager!
-    lipsyncManager.connectAudio(currentAudio);
+    // Chromium keep-alive to prevent speech synthesis pausing after 14s
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = setInterval(() => {
+        if (isAudioPlaying && window.speechSynthesis?.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+        }
+    }, 12000);
 
-    isAudioPlaying = true;
-    currentAudio.play().catch(err => {
-        console.error("Audio playback prevented:", err);
-        playNextChunk();
-    });
+    window.speechSynthesis.speak(utterance);
 }
 
+/**
+ * Speak full text, canceling previous utterance and driving 3D avatar lip-sync
+ */
 export function speak(text, onStart, onEnd) {
-    stopSpeaking(); // clear previous
+    stopSpeaking();
     onEndGlobal = onEnd;
+
+    // Clean markdown, diagrams, formulas, code fences before speech
+    const cleanText = text
+        .replace(/```[\s\S]*?```/g, ' [Diagram omitted] ')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_#~>]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\$\$[\s\S]*?\$\$/g, ' [formula] ')
+        .replace(/\$[^$]+\$/g, ' [symbol] ')
+        .trim();
+
+    if (!cleanText || typeof window === 'undefined' || !window.speechSynthesis) {
+        onEnd?.();
+        return;
+    }
+
+    const chunks = chunkText(cleanText);
+    if (chunks.length === 0) {
+        onEnd?.();
+        return;
+    }
+
+    speechQueue = [...chunks];
+    isAudioPlaying = true;
     onStart?.();
-    enqueueSpeech(text);
+
+    // Start synthetic phoneme sync
+    startSyntheticSpeech(chunks[0]);
+    playNextChunk();
 }
 
+/**
+ * Enqueue speech without stopping currently speaking content
+ */
 export function enqueueSpeech(text) {
-    // Clean markdown before speaking
-    const cleanText = text.replace(/[*_#`~>]/g, '').trim();
+    const cleanText = text
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_#~>]/g, '')
+        .trim();
 
-    const chunks = chunkText(cleanText).filter(c => c.trim().length > 0);
+    const chunks = chunkText(cleanText);
     if (chunks.length === 0) return;
 
-    audioQueue.push(...chunks);
+    speechQueue.push(...chunks);
 
-    // If nothing is playing right now, start consuming the queue
     if (!isAudioPlaying) {
+        isAudioPlaying = true;
+        startSyntheticSpeech(chunks[0]);
         playNextChunk();
     }
 }
 
+/**
+ * Stop any active or queued speech
+ */
 export function stopSpeaking() {
-    audioQueue = [];
-    if (currentAudio) {
-        currentAudio.onended = null;
-        currentAudio.onerror = null;
-        currentAudio.pause();
-        currentAudio.src = "";
-        currentAudio = null;
-    }
+    speechQueue = [];
+    isAudioPlaying = false;
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+
+    stopSyntheticSpeech();
+
     if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
     }
-    isAudioPlaying = false;
+
     if (onEndGlobal) {
         const cb = onEndGlobal;
         onEndGlobal = null;
@@ -169,5 +276,5 @@ export function stopSpeaking() {
 }
 
 export function isSpeaking() {
-    return isAudioPlaying;
+    return isAudioPlaying || (typeof window !== 'undefined' && !!window.speechSynthesis?.speaking);
 }
