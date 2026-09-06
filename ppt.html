@@ -1,51 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tyloop AI — Project Presentation Deck</title>
-  <!-- Google Fonts: Inter & Outfit -->
+  <title>Tyloop AI — Interactive Learning Platform (Project Defense)</title>
+  
+  <!-- Clear, Modern Typography: Plus Jakarta Sans & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- PptxGenJS for One-Click Client-Side PowerPoint Download -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
   <style>
     :root {
-      /* Clean High-End Studio Light Palette */
+      /* Dark Theme (Default) */
+      --bg-main: #09090b;
+      --bg-surface: #121215;
+      --bg-card: #18181b;
+      --bg-card-subtle: #202024;
+      --bg-card-hover: #27272a;
+      
+      --border-subtle: #27272a;
+      --border-strong: #3f3f46;
+
+      --accent-emerald: #10b981;
+      --accent-emerald-soft: rgba(16, 185, 129, 0.12);
+      --accent-emerald-border: rgba(16, 185, 129, 0.3);
+
+      --accent-cyan: #06b6d4;
+      --accent-cyan-soft: rgba(6, 182, 212, 0.12);
+      --accent-cyan-border: rgba(6, 182, 212, 0.3);
+
+      --accent-indigo: #6366f1;
+      --accent-indigo-soft: rgba(99, 102, 241, 0.12);
+      --accent-indigo-border: rgba(99, 102, 241, 0.3);
+
+      --accent-amber: #f59e0b;
+      --accent-amber-soft: rgba(245, 158, 11, 0.12);
+      --accent-amber-border: rgba(245, 158, 11, 0.3);
+
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+
+      --font-heading: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+
+      --slide-ratio: 16 / 9;
+      --shadow-deck: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Light Theme */
+    [data-theme="light"] {
       --bg-main: #f8fafc;
+      --bg-surface: #f1f5f9;
       --bg-card: #ffffff;
-      --bg-card-subtle: #f1f5f9;
+      --bg-card-subtle: #f8fafc;
+      --bg-card-hover: #f1f5f9;
+      
       --border-subtle: #e2e8f0;
       --border-strong: #cbd5e1;
-      --border-glow: #94a3b8;
-      
+
       --accent-emerald: #059669;
       --accent-emerald-soft: #ecfdf5;
       --accent-emerald-border: #a7f3d0;
-      
+
       --accent-cyan: #0284c7;
       --accent-cyan-soft: #f0f9ff;
       --accent-cyan-border: #bae6fd;
-      
+
       --accent-indigo: #4f46e5;
       --accent-indigo-soft: #eef2ff;
       --accent-indigo-border: #c7d2fe;
-      
+
       --accent-amber: #d97706;
       --accent-amber-soft: #fffbeb;
       --accent-amber-border: #fde68a;
-      
-      --accent-rose: #e11d48;
-      --accent-rose-soft: #fff1f2;
-      --accent-rose-border: #fecdd3;
-      
+
       --text-primary: #0f172a;
       --text-secondary: #475569;
       --text-muted: #64748b;
-      
-      --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+
+      --shadow-deck: 0 20px 45px -15px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
     }
 
     * {
@@ -64,34 +102,34 @@
       flex-direction: column;
       overflow: hidden;
       user-select: none;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    /* Ambient Subtle Gradient */
+    /* Ambient Background Glow */
     .ambient-glow {
       position: fixed;
-      top: -15%;
+      top: -20%;
       left: 50%;
       transform: translateX(-50%);
-      width: 900px;
-      height: 450px;
-      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(2, 132, 199, 0.05) 50%, transparent 70%);
-      filter: blur(80px);
+      width: 1000px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+      filter: blur(90px);
       pointer-events: none;
       z-index: 0;
     }
 
-    /* Top Presentation Bar */
+    /* Header Presentation Bar */
     header.presentation-header {
       position: relative;
-      z-index: 10;
+      z-index: 20;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.9rem 2.25rem;
+      padding: 0.75rem 2rem;
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(255, 255, 255, 0.9);
+      background: var(--bg-surface);
       backdrop-filter: blur(16px);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     .brand-group {
@@ -101,29 +139,29 @@
     }
 
     .brand-badge {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 10px;
       border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #ffffff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+      background: var(--bg-card);
       color: var(--accent-emerald);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .brand-title {
       font-family: var(--font-heading);
-      font-weight: 700;
+      font-weight: 800;
       font-size: 1.15rem;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.025em;
       color: var(--text-primary);
     }
 
     .brand-tag {
       font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
+      padding: 0.2rem 0.65rem;
       border-radius: 9999px;
       background: var(--accent-emerald-soft);
       border: 1px solid var(--accent-emerald-border);
@@ -134,35 +172,38 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.55rem;
     }
 
-    .slide-counter {
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
+    .slide-counter-badge {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
       color: var(--text-muted);
-      margin-right: 0.5rem;
-      font-weight: 600;
+      margin-right: 0.4rem;
+      font-weight: 700;
+      background: var(--bg-card);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
     }
 
     .nav-btn {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 0.45rem 0.9rem;
-      border-radius: 9px;
-      font-size: 0.8rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
       font-weight: 600;
-      background: #ffffff;
+      background: var(--bg-card);
       color: var(--text-secondary);
       border: 1px solid var(--border-subtle);
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: all 0.15s ease;
     }
 
     .nav-btn:hover:not(:disabled) {
-      background: var(--bg-card-subtle);
+      background: var(--bg-card-hover);
       border-color: var(--border-strong);
       color: var(--text-primary);
       transform: translateY(-1px);
@@ -173,14 +214,29 @@
       cursor: not-allowed;
     }
 
-    .nav-btn.primary {
-      background: var(--text-primary);
+    .nav-btn.btn-accent {
+      background: var(--accent-emerald);
       color: #ffffff;
-      border-color: var(--text-primary);
+      border-color: var(--accent-emerald);
     }
-    .nav-btn.primary:hover:not(:disabled) {
-      background: #1e293b;
+    .nav-btn.btn-accent:hover:not(:disabled) {
+      background: #059669;
+    }
+
+    .nav-btn.btn-pptx {
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
       color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+    }
+    .nav-btn.btn-pptx:hover:not(:disabled) {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      transform: translateY(-1px);
+    }
+
+    .btn-icon-only {
+      padding: 0.45rem;
+      border-radius: 8px;
     }
 
     /* Main Deck Stage */
@@ -194,66 +250,72 @@
       z-index: 5;
     }
 
+    .slide-aspect-wrapper {
+      width: 100%;
+      max-width: 1220px;
+      aspect-ratio: var(--slide-ratio);
+      position: relative;
+      display: flex;
+    }
+
     .slide-container {
       width: 100%;
-      max-width: 1180px;
       height: 100%;
-      max-height: 660px;
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
-      border-radius: 22px;
-      box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.02);
+      border-radius: 20px;
+      box-shadow: var(--shadow-deck);
       display: flex;
       flex-direction: column;
       position: relative;
       overflow: hidden;
     }
 
-    /* Slide Content Frames */
+    /* Slide Transition */
     .slide {
       display: none;
       height: 100%;
       width: 100%;
-      padding: 2.25rem 3rem;
+      padding: 2.5rem 3.25rem;
       flex-direction: column;
       justify-content: space-between;
-      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .slide.active {
       display: flex;
     }
 
-    @keyframes fadeIn {
+    @keyframes slideIn {
       from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: scale(0.99) translateY(6px);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: scale(1) translateY(0);
       }
     }
 
-    /* Typography & Core UI Blocks */
+    /* Slide Content Typography */
     .slide-header {
-      margin-bottom: 1.1rem;
+      margin-bottom: 0.9rem;
     }
 
-    .slide-category {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
+    .slide-category-tag {
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       color: var(--accent-emerald);
       margin-bottom: 0.35rem;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
     }
 
-    .slide-category::before {
+    .slide-category-tag::before {
       content: '';
       display: inline-block;
       width: 6px;
@@ -264,19 +326,19 @@
 
     .slide-title {
       font-family: var(--font-heading);
-      font-size: 1.95rem;
-      font-weight: 700;
-      letter-spacing: -0.025em;
+      font-size: 2.15rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
       color: var(--text-primary);
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
     .slide-subtitle {
-      font-size: 0.88rem;
+      font-size: 0.95rem;
       color: var(--text-secondary);
-      margin-top: 0.35rem;
-      line-height: 1.5;
-      max-width: 920px;
+      margin-top: 0.4rem;
+      line-height: 1.55;
+      max-width: 980px;
     }
 
     .slide-body {
@@ -291,60 +353,59 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       border-top: 1px solid var(--border-subtle);
       padding-top: 0.85rem;
       margin-top: 0.85rem;
+      font-weight: 500;
     }
 
-    /* Grids */
+    /* Layout Grids */
     .grid-2 {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1.25rem;
+      gap: 1.5rem;
       width: 100%;
     }
 
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.15rem;
+      gap: 1.35rem;
       width: 100%;
     }
 
     .grid-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
+      gap: 1.1rem;
       width: 100%;
     }
 
-    /* Feature Cards */
+    /* Clean Simple Cards */
     .card {
-      background: #ffffff;
+      background: var(--bg-card-subtle);
       border: 1px solid var(--border-subtle);
       border-radius: 16px;
-      padding: 1.25rem;
+      padding: 1.4rem;
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
+      gap: 0.65rem;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     }
 
     .card:hover {
       border-color: var(--border-strong);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+      background: var(--bg-card-hover);
       transform: translateY(-2px);
     }
 
     .card-icon {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: 10px;
-      background: var(--bg-card-subtle);
+      background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
@@ -355,817 +416,1144 @@
 
     .card-title {
       font-family: var(--font-heading);
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--text-primary);
+      letter-spacing: -0.015em;
     }
 
     .card-desc {
-      font-size: 0.82rem;
+      font-size: 0.88rem;
       color: var(--text-secondary);
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     .badge-pill {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      padding: 0.15rem 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      padding: 0.25rem 0.6rem;
       border-radius: 6px;
-      background: var(--bg-card-subtle);
+      background: var(--bg-card);
       color: var(--text-muted);
       border: 1px solid var(--border-subtle);
       width: fit-content;
       font-weight: 600;
     }
 
-    /* Hero / Title Slide */
-    .hero-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      justify-content: center;
-      gap: 1.35rem;
-      max-width: 860px;
-      margin: 0 auto;
-    }
-
-    .hero-badge-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .hero-title {
-      font-family: var(--font-heading);
-      font-size: 3.4rem;
-      font-weight: 800;
-      letter-spacing: -0.035em;
-      line-height: 1.1;
-      color: var(--text-primary);
-    }
-
-    .hero-title span {
-      background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-subtitle {
-      font-size: 1.1rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      max-width: 780px;
-    }
-
-    .hero-tags {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.6rem;
-    }
-
-    .hero-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: #ffffff;
-      border: 1px solid var(--border-subtle);
-      padding: 0.4rem 0.85rem;
-      border-radius: 9999px;
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-
-    .hero-pill svg {
-      color: var(--accent-emerald);
-    }
-
-    /* Vector Diagrams */
-    .diagram-stage {
-      width: 100%;
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
-    }
-
-    .diagram-svg-container {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .diagram-svg-container svg {
-      width: 100%;
-      height: auto;
-      max-height: 330px;
-    }
-
-    /* Split Diagram Layout */
-    .split-layout {
-      display: grid;
-      grid-template-columns: 1fr 1.3fr;
-      gap: 1.5rem;
-      width: 100%;
-      align-items: center;
-    }
-
-    .split-text-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-    }
-
-    .feature-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 0.75rem;
-      background: #ffffff;
+    /* Simple Visual Process Box */
+    .process-box {
+      background: var(--bg-card-subtle);
       border: 1px solid var(--border-subtle);
       border-radius: 12px;
+      padding: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
 
-    .feature-icon-badge {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+    .process-step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       background: var(--accent-emerald-soft);
       border: 1px solid var(--accent-emerald-border);
       color: var(--accent-emerald);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
       flex-shrink: 0;
-      margin-top: 0.1rem;
     }
 
-    /* Presentation Footer & Key Controls */
+    /* Hero Slide 1 Specifics */
+    .hero-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      gap: 1.4rem;
+    }
+
+    .hero-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: 4.1rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      color: var(--text-primary);
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.18rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 860px;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.65rem;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--bg-card-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 0.45rem 0.95rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .hero-pill svg {
+      color: var(--accent-emerald);
+    }
+
+    /* Progress Bar */
+    .progress-track {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 3.5px;
+      background: var(--border-subtle);
+      width: 100%;
+      z-index: 10;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan));
+      width: 8.33%;
+      transition: width 0.3s ease;
+    }
+
+    /* Footer Navigation & Hints */
     footer.presentation-footer {
       position: relative;
-      z-index: 10;
+      z-index: 20;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.75rem 2.25rem;
-      background: rgba(255, 255, 255, 0.9);
+      padding: 0.65rem 2rem;
+      background: var(--bg-surface);
       border-top: 1px solid var(--border-subtle);
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
     }
 
     .key-hints {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.25rem;
     }
 
     kbd {
-      background: var(--bg-card-subtle);
+      background: var(--bg-card);
       border: 1px solid var(--border-strong);
       border-radius: 5px;
       padding: 0.15rem 0.45rem;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
+      font-family: var(--font-heading);
+      font-size: 0.72rem;
       color: var(--text-primary);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+      font-weight: 700;
     }
 
-    .progress-track {
-      position: absolute;
+    /* Speaker Notes Drawer (N Key) */
+    .notes-drawer {
+      position: fixed;
+      bottom: 45px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      width: 90%;
+      max-width: 1000px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 14px 14px 0 0;
+      padding: 1.25rem 1.75rem;
+      z-index: 50;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .notes-drawer.open {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .notes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 0.5rem;
+    }
+
+    .notes-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-emerald);
+    }
+
+    .notes-content {
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    /* Slide Sorter Drawer (S Key) */
+    .sorter-overlay {
+      position: fixed;
       top: 0;
       left: 0;
-      height: 3px;
-      background: var(--border-subtle);
-      width: 100%;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
     }
 
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan));
-      width: 10%;
-      transition: width 0.3s ease;
+    .sorter-overlay.open {
+      display: flex;
+    }
+
+    .sorter-modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 1100px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .sorter-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      overflow-y: auto;
+      padding: 1rem 0;
+    }
+
+    .sorter-thumb {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .sorter-thumb:hover, .sorter-thumb.active {
+      border-color: var(--accent-emerald);
+      transform: translateY(-2px);
+    }
+
+    .sorter-thumb-num {
+      font-size: 0.72rem;
+      color: var(--accent-emerald);
+      font-weight: 700;
+    }
+
+    .sorter-thumb-title {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.35;
+    }
+
+    /* Print Styles: PDF Slide Export */
+    @media print {
+      body {
+        overflow: visible;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      header.presentation-header,
+      footer.presentation-footer,
+      .ambient-glow,
+      .notes-drawer,
+      .sorter-overlay {
+        display: none !important;
+      }
+      main.deck-viewport {
+        padding: 0 !important;
+        display: block !important;
+      }
+      .slide-aspect-wrapper {
+        max-width: 100% !important;
+        aspect-ratio: auto !important;
+        display: block !important;
+      }
+      .slide-container {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        display: block !important;
+      }
+      .slide {
+        display: flex !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        padding: 2.5rem !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+      .card, .process-box {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+      }
+      .card-title, .slide-title, .hero-title {
+        color: #0f172a !important;
+      }
+      .card-desc, .slide-subtitle, .hero-subtitle {
+        color: #475569 !important;
+      }
+      @page {
+        size: landscape;
+        margin: 0;
+      }
     }
   </style>
 </head>
 <body>
   <div class="ambient-glow"></div>
 
-  <!-- Top Navigation Header -->
+  <!-- Header Bar -->
   <header class="presentation-header">
     <div class="brand-group">
       <div class="brand-badge">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" />
         </svg>
       </div>
       <span class="brand-title">Tyloop AI</span>
-      <span class="brand-tag">Engineering Project Defense</span>
+      <span class="brand-tag">Project Defense Presentation</span>
     </div>
 
     <div class="header-controls">
-      <span class="slide-counter" id="slideIndicator">01 / 10</span>
-      <button class="nav-btn" id="prevBtn" onclick="prevSlide()" disabled>
+      <span class="slide-counter-badge" id="slideIndicator">01 / 12</span>
+
+      <button class="nav-btn" id="prevBtn" onclick="prevSlide()" disabled title="Previous Slide (←)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
         Prev
       </button>
-      <button class="nav-btn primary" id="nextBtn" onclick="nextSlide()">
+
+      <button class="nav-btn btn-accent" id="nextBtn" onclick="nextSlide()" title="Next Slide (→)">
         Next
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+
+      <!-- DOWNLOAD AS PPTX BUTTON -->
+      <button class="nav-btn btn-pptx" onclick="downloadPptx()" id="pptxDownloadBtn" title="Download PowerPoint (.pptx) file">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Download PPT (.pptx)</span>
+      </button>
+
+      <!-- Print / Export PDF -->
+      <button class="nav-btn" onclick="exportPdf()" title="Print or Save PDF">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+        PDF
+      </button>
+
+      <!-- Slide Sorter Drawer -->
+      <button class="nav-btn" onclick="toggleSlideSorter()" title="All Slides (S)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+        Slides
+      </button>
+
+      <!-- Speaker Talking Points -->
+      <button class="nav-btn" onclick="toggleSpeakerNotes()" id="notesToggleBtn" title="Presenter Talking Points (N)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Notes
+      </button>
+
+      <!-- Theme Toggle -->
+      <button class="nav-btn btn-icon-only" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">
+        <svg id="themeIconSun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+
+      <!-- Fullscreen -->
+      <button class="nav-btn btn-icon-only" onclick="toggleFullscreen()" title="Fullscreen (F)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
       </button>
     </div>
   </header>
 
   <!-- Slide Stage -->
   <main class="deck-viewport">
-    <div class="slide-container">
-      <div class="progress-track">
-        <div class="progress-bar" id="progressBar"></div>
+    <div class="slide-aspect-wrapper">
+      <div class="slide-container">
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 1: Title & Overview -->
+        <!-- ========================================== -->
+        <section class="slide active" data-slide="1" data-notes="Good morning/afternoon professors. Our project is Tyloop AI — an interactive learning platform designed to help students learn difficult subjects. Instead of just reading text, students learn by talking to a 3D digital teacher, looking at automatic visual diagrams, taking self-assessment quizzes, and practicing job interviews.">
+          <div class="slide-category-tag">Final Year Engineering Project Presentation</div>
+          <div class="slide-body">
+            <div class="hero-container">
+              <div class="hero-badge-row">
+                <span class="badge-pill" style="background:var(--accent-emerald-soft); color:var(--accent-emerald); border-color:var(--accent-emerald-border);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Final Year Capstone Presentation
+                </span>
+                <span class="badge-pill" style="background:var(--accent-cyan-soft); color:var(--accent-cyan); border-color:var(--accent-cyan-border);">
+                  Interactive Desktop AI Platform
+                </span>
+              </div>
+              
+              <h1 class="hero-title">
+                Tyloop <span>AI</span>
+              </h1>
+              
+              <p class="hero-subtitle">
+                An intelligent desktop learning platform that helps students understand complex subjects through a 3D digital teacher, visual diagrams, automated presentation creation, interactive textbook quizzes, and mock job interviews.
+              </p>
+
+              <div class="hero-tags">
+                <span class="hero-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  3D Digital Talking Teacher
+                </span>
+                <span class="hero-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Visual Smart Blackboard
+                </span>
+                <span class="hero-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                  PDF Book Quiz Generator
+                </span>
+                <span class="hero-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
+                  Mock Technical Job Interviewer
+                </span>
+                <span class="hero-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Works Online & 100% Offline
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Department of Computer Science & Engineering</span>
+            <span>Slide 01 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 2: Problem Statement -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="2" data-notes="Professors, why did we build this? Current AI tools like ChatGPT only give long paragraphs of text. When students read plain text walls, they quickly get tired and find it hard to visualize complex ideas like algorithms or science models. Also, current tools stop working without internet. Tyloop AI solves these problems by providing visual diagrams, voice interaction, and offline privacy.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Problem & Motivation</div>
+            <h2 class="slide-title">Why Traditional AI Tools Fall Short for Students</h2>
+            <p class="slide-subtitle">Standard AI chatbots rely entirely on long walls of text. Students learn much better when they can see visual diagrams, hear explanations, and practice interactively.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                </div>
+                <h3 class="card-title">1. Text Overload</h3>
+                <p class="card-desc">
+                  Reading long paragraphs of text makes complex engineering concepts hard to visualize and mentally exhausting for students to follow.
+                </p>
+                <span class="badge-pill" style="margin-top:auto;">Hard to Visualize</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/></svg>
+                </div>
+                <h3 class="card-title">2. Lack of Human Touch</h3>
+                <p class="card-desc">
+                  Plain chat boxes feel cold and distant. Having a digital teacher that speaks and gestures makes learning much more engaging and natural.
+                </p>
+                <span class="badge-pill" style="margin-top:auto;">Passive Reading</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h3 class="card-title">3. Internet & Privacy Risks</h3>
+                <p class="card-desc">
+                  Most online AI tools stop working without Wi-Fi and require uploading private university study documents to public servers.
+                </p>
+                <span class="badge-pill" style="margin-top:auto;">Privacy Concerns</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Educational Challenges Addressed</span>
+            <span>Slide 02 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 3: System Pipeline -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="3" data-notes="Here is how the system works in 3 simple steps: 1) The student asks a question by speaking, typing, or uploading a PDF document. 2) The smart processing engine understands the question (using fast cloud AI or private offline AI). 3) The application responds with a spoken voice from the 3D teacher, visual diagrams on the blackboard, and interactive quizzes.">
+          <div class="slide-header">
+            <div class="slide-category-tag">System Overview</div>
+            <h2 class="slide-title">How Tyloop AI Works in 3 Simple Steps</h2>
+            <p class="slide-subtitle">A straightforward learning pipeline that turns student questions into spoken lessons, visual blackboards, and interactive practice tests.</p>
+          </div>
+          <div class="slide-body">
+            <div style="display:flex; flex-direction:column; gap:1.2rem; width:100%;">
+              <div class="process-box">
+                <div class="process-step-num">1</div>
+                <div>
+                  <h4 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--text-primary);">Student Input</h4>
+                  <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:0.2rem;">
+                    Students can speak using their microphone, upload PDF study materials, or type questions directly into the chat interface.
+                  </p>
+                </div>
+              </div>
+
+              <div class="process-box">
+                <div class="process-step-num" style="background:var(--accent-cyan-soft); color:var(--accent-cyan); border-color:var(--accent-cyan-border);">2</div>
+                <div>
+                  <h4 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--text-primary);">Smart AI Processing Engine</h4>
+                  <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:0.2rem;">
+                    Processes the student's request using either ultra-fast cloud AI or 100% private offline AI that runs right on the laptop without internet.
+                  </p>
+                </div>
+              </div>
+
+              <div class="process-box">
+                <div class="process-step-num" style="background:var(--accent-indigo-soft); color:var(--accent-indigo); border-color:var(--accent-indigo-border);">3</div>
+                <div>
+                  <h4 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--text-primary);">Interactive Visual & Spoken Lessons</h4>
+                  <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:0.2rem;">
+                    The 3D digital teacher speaks the explanation out loud, the smart blackboard draws visual diagrams, and practice tests assess learning.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Simple 3-Step Architecture</span>
+            <span>Slide 03 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 4: Feature 1 - Dual Engine -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="4" data-notes="Feature 1 is our Smart Dual AI Engine. We give students two options: Cloud Mode for maximum speed and intelligence, or Offline Mode for complete privacy. In Offline Mode, everything runs locally on the laptop. This means students can continue studying even without internet, with zero risk of data leakage.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Core Feature 1</div>
+            <h2 class="slide-title">Smart Dual AI Engine: Cloud Speed + Offline Privacy</h2>
+            <p class="slide-subtitle">Students can seamlessly switch between high-speed cloud intelligence and 100% private offline AI depending on their needs.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-2">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-emerald);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <h3 class="card-title">Cloud Mode (Fast & Powerful)</h3>
+                <p class="card-desc">
+                  Uses Google Gemini Cloud AI for instant answers, detailed presentation deck creation, and complex problem solving when internet is available.
+                </p>
+                <div style="background:var(--bg-card); padding:0.85rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.85rem; color:var(--text-secondary); margin-top:0.3rem;">
+                  • Sub-second response speed<br/>
+                  • Ideal for generating full presentations & diagrams<br/>
+                  • Automatic health indicator in top navigation bar
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-cyan);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <h3 class="card-title">Offline Mode (100% Private)</h3>
+                <p class="card-desc">
+                  Runs directly on the user's laptop using Ollama. Requires zero internet connection, protecting student privacy and confidential documents.
+                </p>
+                <div style="background:var(--bg-card); padding:0.85rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.85rem; color:var(--text-secondary); margin-top:0.3rem;">
+                  • Works anywhere without Wi-Fi connection<br/>
+                  • Zero monthly fees or data usage<br/>
+                  • In-app download progress indicator for AI models
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Flexible AI Connection Modes</span>
+            <span>Slide 04 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 5: Feature 2 - 3D Avatar -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="5" data-notes="Feature 2 is our 3D Digital Teacher. Rather than reading static text, students learn by listening to a digital avatar. The avatar's lips move in perfect sync with the voice sound. It also breathes, blinks, and makes eye contact, creating a friendly classroom environment. Students can even customize the avatar's hair, clothes, and classroom lighting.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Core Feature 2</div>
+            <h2 class="slide-title">Interactive 3D Digital Teacher & Voice Lessons</h2>
+            <p class="slide-subtitle">A friendly digital teacher that speaks out loud, matches lip movements to spoken words, and provides realistic classroom presence.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                </div>
+                <h3 class="card-title">Realistic Speech Lip-Sync</h3>
+                <p class="card-desc">
+                  Mouth shapes automatically synchronize with spoken lesson words in real time, making explanations natural and easy to follow.
+                </p>
+                <span class="badge-pill" style="margin-top:auto;">Natural Voice Sync</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <h3 class="card-title">Life-Like Micro-Animations</h3>
+                <p class="card-desc">
+                  Features ambient breathing, natural eye blinking, and friendly head gestures to keep students focused and engaged.
+                </p>
+                <span class="badge-pill" style="margin-top:auto;">Natural Animations</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+                </div>
+                <h3 class="card-title">Avatar Customization Studio</h3>
+                <p class="card-desc">
+                  Students can customize skin tone, clothing style, hair colors, and classroom lighting presets (Studio Light, Warm Amber, Cyber Glow).
+                </p>
+                <span class="badge-pill" style="margin-top:auto;">Personalized Teacher</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Humanized Digital Educator</span>
+            <span>Slide 05 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 6: Feature 3 - Smart Board -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="6" data-notes="Feature 3 is our Visual Smart Blackboard. When explaining complex ideas, the AI automatically draws 2D flowcharts, process diagrams, or formulas. It can also render rotatable 3D shapes—such as molecules, planetary orbits, or physics waves—which students can click and rotate 360 degrees. The screen can be split so students see the 3D teacher and diagrams at the same time.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Core Feature 3</div>
+            <h2 class="slide-title">Multi-Dimensional Smart Board: 2D & 3D Visuals</h2>
+            <p class="slide-subtitle">Automatically converts abstract concepts into colorful 2D flowcharts and rotatable 3D spatial models that students can explore.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-emerald);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h3 class="card-title">2D Vector Flowcharts</h3>
+                <p class="card-desc">
+                  Automatically draws process flowcharts, organizational diagrams, sequence charts, and mathematical formulas as the lesson progresses.
+                </p>
+                <span class="badge-pill">Crisp Vector Zoom</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-cyan);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                </div>
+                <h3 class="card-title">3D Interactive Models</h3>
+                <p class="card-desc">
+                  Renders rotatable 3D models of science concepts, molecules, planetary systems, and geometry that students can spin 360 degrees.
+                </p>
+                <span class="badge-pill">360° Rotatable</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-indigo);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+                </div>
+                <h3 class="card-title">Split-Screen Classroom</h3>
+                <p class="card-desc">
+                  A flexible split screen allows students to concurrently view the 3D teacher, visual blackboard, and chat text history.
+                </p>
+                <span class="badge-pill">Multi-Pane Stage</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Visual & Spatial Classroom</span>
+            <span>Slide 06 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 7: Feature 4 - Slide Studio -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="7" data-notes="Feature 4 is our AI Slide Deck Creator. Students often need to create presentations for seminars or projects. Tyloop AI can automatically convert any research topic or study notes into a professional multi-slide deck. Students can present in fullscreen, ask the AI co-pilot to simplify slides, and download the presentation as an editable PowerPoint (.pptx) file with one click.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Core Feature 4</div>
+            <h2 class="slide-title">AI Presentation Creator & One-Click PPT Download</h2>
+            <p class="slide-subtitle">Instantly generates structured presentation decks from any study topic or document, with direct export to Microsoft PowerPoint.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-2">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-emerald);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="14" x="3" y="3" rx="2"/><path d="M7 21h10"/><path d="M12 17v4"/><path d="m9 9 6 3-6 3Z"/></svg>
+                </div>
+                <h3 class="card-title">Automatic Slide Generation</h3>
+                <p class="card-desc">
+                  Input any subject or research notes to automatically synthesize multi-slide presentations complete with titles, bullet points, and key takeaways.
+                </p>
+                <div style="background:var(--bg-card); padding:0.85rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.85rem; color:var(--text-secondary); margin-top:0.3rem;">
+                  • Audience Presets: Academic Seminar, General Overview, Executive Briefing<br/>
+                  • Beautiful themes: Studio Dark, Slate Academic, Cyberpunk Emerald<br/>
+                  • Fullscreen presentation mode with simple keyboard navigation
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-cyan);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <h3 class="card-title">One-Click PowerPoint (.pptx) Export</h3>
+                <p class="card-desc">
+                  Export your presentation deck directly into a fully editable Microsoft PowerPoint file (.pptx) that includes all cards and presenter talking points.
+                </p>
+                <div style="background:var(--bg-card); padding:0.85rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.85rem; color:var(--text-secondary); margin-top:0.3rem;">
+                  • Generates standard 16:9 widescreen PowerPoint files<br/>
+                  • Embedded presenter speaker notes for viva defense preparation<br/>
+                  • Integrated slide co-pilot assistant for quick slide edits
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Presentation Generation Engine</span>
+            <span>Slide 07 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 8: Feature 5 - Assessment & PDF Quiz -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="8" data-notes="Feature 5 is our Document & PDF Quiz Generator. Students can drag and drop textbook PDFs, lecture notes, or study guides directly into the app. The AI reads the material and automatically generates multiple-choice quizzes with smart options. When a student chooses an answer, it gives instant scoring and explains exactly why the answer is right or wrong.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Core Feature 5</div>
+            <h2 class="slide-title">PDF Textbook Ingestion & Interactive Quiz Mode</h2>
+            <p class="slide-subtitle">Upload any textbook chapter or study notes to automatically formulate practice tests, instant scoring, and detailed explanations.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-amber);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <h3 class="card-title">Easy File Drag & Drop</h3>
+                <p class="card-desc">
+                  Drag and drop PDF textbooks, lecture slides, study guides, or notes directly into the application for immediate analysis.
+                </p>
+                <span class="badge-pill">PDF & Text Parsing</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-amber);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <h3 class="card-title">Smart Multiple-Choice Quizzes</h3>
+                <p class="card-desc">
+                  Formulates realistic multiple-choice questions with challenging options to thoroughly test student understanding.
+                </p>
+                <span class="badge-pill">Automated Quizzes</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-amber);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </div>
+                <h3 class="card-title">Instant Scoring & Explanations</h3>
+                <p class="card-desc">
+                  Provides immediate grading percentages, voice question readouts, and clear explanations for why each option is correct or incorrect.
+                </p>
+                <span class="badge-pill">Instant Feedback</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Self-Assessment & Practice Engine</span>
+            <span>Slide 08 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 9: Feature 6 - Mock Interview Stage -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="9" data-notes="Feature 9 is our AI Mock Job Interviewer. To prepare students for campus placements and job interviews, Tyloop AI provides a split-screen video call stage. One side shows the student's live laptop camera, and the other side shows the 3D interviewer avatar. The avatar asks job-tailored questions, listens to the student's voice answers, and gives a helpful feedback report on confidence and clarity.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Core Feature 6</div>
+            <h2 class="slide-title">Interactive Mock Technical Job Interviewer</h2>
+            <p class="slide-subtitle">A realistic video interview simulator that helps students practice oral answers, build confidence, and receive placement feedback.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
+                </div>
+                <h3 class="card-title">Dual Video Call View</h3>
+                <p class="card-desc">
+                  Split-screen stage placing the 3D AI Recruiter avatar next to the student's live laptop webcam stream for an authentic interview feel.
+                </p>
+                <span class="badge-pill">Live Webcam View</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                </div>
+                <h3 class="card-title">Role-Tailored Questions</h3>
+                <p class="card-desc">
+                  Input any job title or industry (Engineering, Science, Business) to generate relevant interview questions and follow-ups.
+                </p>
+                <span class="badge-pill">Custom Job Roles</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </div>
+                <h3 class="card-title">Feedback & Performance Scorecard</h3>
+                <p class="card-desc">
+                  Provides a clear candidate report evaluating answer clarity, technical depth, confidence, and areas for improvement.
+                </p>
+                <span class="badge-pill">Placement Readiness</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Career Preparation & Interview Practice</span>
+            <span>Slide 09 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 10: Technical Design & Reliability -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="10" data-notes="Professors, regarding system design and reliability: Tyloop AI is built as a native desktop application using standard desktop software practices. It runs smoothly on Windows, Mac, and Linux computers. All student progress, quiz scores, and settings are saved automatically on the laptop so students never lose their work.">
+          <div class="slide-header">
+            <div class="slide-category-tag">System Design</div>
+            <h2 class="slide-title">Built for Speed, Security & Everyday Laptops</h2>
+            <p class="slide-subtitle">Engineered to run reliably as a native desktop application with automatic progress saving and low computer resource usage.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-3">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-indigo);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                </div>
+                <h3 class="card-title">Native Desktop Software</h3>
+                <p class="card-desc">
+                  Packaged as a native desktop application (using Electron) that works smoothly across Windows, macOS, and Linux laptops.
+                </p>
+                <span class="badge-pill">Cross-Platform</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-indigo);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+                </div>
+                <h3 class="card-title">Automatic Progress Saving</h3>
+                <p class="card-desc">
+                  Lessons, study notes, quiz scores, and customized settings are saved automatically on the laptop so students never lose progress.
+                </p>
+                <span class="badge-pill">Local Persistence</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-indigo);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <h3 class="card-title">Smooth 60 FPS Visuals</h3>
+                <p class="card-desc">
+                  Optimized 3D graphics and responsive interfaces ensure fluid visual animations without slowing down student laptops.
+                </p>
+                <span class="badge-pill">Optimized Performance</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Reliable Desktop Foundation</span>
+            <span>Slide 10 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 11: Project Benefits Summary -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="11" data-notes="To summarize the core benefits for evaluation: 1) Better Learning: Combining voice, 3D avatars, and visual diagrams improves student understanding. 2) Complete Privacy & Offline Access: Students can study anywhere without internet. 3) All-in-One Solution: Replaces multiple separate tools with one platform for studying, testing, and job interview practice.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Evaluation Summary</div>
+            <h2 class="slide-title">Summary of Key Project Benefits</h2>
+            <p class="slide-subtitle">Why Tyloop AI represents a significant step forward in modern visual education platforms.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-4" style="width:100%;">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-emerald);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h4 class="card-title">Better Understanding</h4>
+                <p class="card-desc">
+                  Visual diagrams and spoken lessons help students grasp complex topics much faster than reading plain text walls.
+                </p>
+                <span class="badge-pill">High Retention</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-cyan);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <h4 class="card-title">100% Privacy & Offline</h4>
+                <p class="card-desc">
+                  Offline mode protects student study materials and allows continuous learning anywhere without internet access.
+                </p>
+                <span class="badge-pill">Study Anywhere</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-indigo);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+                </div>
+                <h4 class="card-title">All-in-One Solution</h4>
+                <p class="card-desc">
+                  Combines visual teaching, presentation creation, PDF quiz testing, and interview simulation in a single application.
+                </p>
+                <span class="badge-pill">Unified Platform</span>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-amber);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <h4 class="card-title">Career Preparedness</h4>
+                <p class="card-desc">
+                  Interactive practice quizzes and video job interview simulations prepare students for academic and career success.
+                </p>
+                <span class="badge-pill">Job Ready</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Project Value & Innovation</span>
+            <span>Slide 11 of 12</span>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SLIDE 12: Conclusion & Q&A -->
+        <!-- ========================================== -->
+        <section class="slide" data-slide="12" data-notes="Thank you, respected professors and evaluators. In conclusion: Tyloop AI successfully combines 3D digital teaching, visual blackboards, PDF quiz generation, presentation creation, and mock interview practice into one native platform. The system is fully built, operational, and ready for a live demonstration. We are open for your questions.">
+          <div class="slide-header">
+            <div class="slide-category-tag">Project Conclusion</div>
+            <h2 class="slide-title">Conclusion & Live Demonstration Readiness</h2>
+            <p class="slide-subtitle">Summary of project achievements and readiness for evaluator questions and live system demo.</p>
+          </div>
+          <div class="slide-body">
+            <div class="grid-2" style="margin-bottom:1.25rem;">
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-emerald);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h3 class="card-title">Innovative Learning Platform</h3>
+                <p class="card-desc">
+                  Proves that uniting visual blackboards, spoken voice lessons, and 3D digital teachers creates a significantly more effective learning experience than static text chatbots.
+                </p>
+              </div>
+
+              <div class="card">
+                <div class="card-icon" style="color:var(--accent-cyan);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <h3 class="card-title">Complete Student Toolset</h3>
+                <p class="card-desc">
+                  Successfully combines lesson teaching, presentation generation, PDF textbook testing, and job interview practice into one easy-to-use desktop application.
+                </p>
+              </div>
+            </div>
+
+            <!-- Final Evaluation Callout -->
+            <div style="background:var(--accent-emerald-soft); border:1px solid var(--accent-emerald-border); border-radius:14px; padding:1.2rem 1.6rem; display:flex; align-items:center; gap:1.25rem; width:100%;">
+              <div style="width:44px; height:44px; border-radius:12px; background:var(--accent-emerald); display:flex; align-items:center; justify-content:center; color:#ffffff; flex-shrink:0;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <h4 style="font-family:var(--font-heading); font-size:1.1rem; font-weight:700; color:var(--text-primary);">
+                  Thank You Evaluators! Project Defense is Ready for Live Demonstration & Questions.
+                </h4>
+                <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:0.25rem;">
+                  The application is fully operational on this workstation. We welcome your evaluation questions and live feature demonstration.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span>Project Defense Conclusion & Q&A Session</span>
+            <span>Slide 12 of 12</span>
+          </div>
+        </section>
+
       </div>
-
-      <!-- SLIDE 1: Project Overview & Identity -->
-      <section class="slide active" data-slide="1">
-        <div class="slide-category">System Showcase</div>
-        <div class="slide-body">
-          <div class="hero-container">
-            <div class="hero-badge-row">
-              <span class="badge-pill" style="background:var(--accent-emerald-soft); color:var(--accent-emerald); border-color:var(--accent-emerald-border);">
-                Final Year Engineering Project
-              </span>
-              <span class="badge-pill" style="background:var(--accent-cyan-soft); color:var(--accent-cyan); border-color:var(--accent-cyan-border);">
-                Autonomous Desktop AI Platform
-              </span>
-            </div>
-            <h1 class="hero-title">
-              Tyloop <span>AI</span>
-            </h1>
-            <p class="hero-subtitle">
-              An intelligent multi-modal desktop platform uniting an interactive 3D Avatar, real-time speech viseme lip-sync, multi-dimensional visual classrooms (2D/3D), generative slide deck studio, and offline local inference.
-            </p>
-            <div class="hero-tags">
-              <span class="hero-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                Hybrid AI (Gemini Cloud + Ollama Local)
-              </span>
-              <span class="hero-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                3D Viseme Avatar & Speech Physics
-              </span>
-              <span class="hero-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                2D/3D Smart Board & Vector Engine
-              </span>
-              <span class="hero-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
-                AI Assessment & PDF Quiz Mode
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Project Defense & Architecture Overview</span>
-          <span>Slide 1 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 2: Problem Statement & Vision -->
-      <section class="slide" data-slide="2">
-        <div class="slide-header">
-          <div class="slide-category">Problem Definition</div>
-          <h2 class="slide-title">Beyond Monolithic Plain Text AI</h2>
-          <p class="slide-subtitle">Current AI assistants restrict users to static text feeds. Complex computer science, engineering circuits, and algorithms require spatial, visual, and embodied comprehension.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-3">
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-              </div>
-              <h3 class="card-title">Text-Only Bottleneck</h3>
-              <p class="card-desc">Abstract algorithms (e.g. Red-Black trees, neural backprop, CPU pipelining) cannot be taught efficiently through plain text walls.</p>
-              <span class="badge-pill">Cognitive Friction</span>
-            </div>
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/></svg>
-              </div>
-              <h3 class="card-title">Passive vs Interactive</h3>
-              <p class="card-desc">Users need dynamic 2D vector flowcharts, rotatable 3D spatial coordinate models, and real-time assessments, not passive reading.</p>
-              <span class="badge-pill">Spatial Mechanics</span>
-            </div>
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </div>
-              <h3 class="card-title">Cloud Lock-in & Privacy</h3>
-              <p class="card-desc">Commercial LLMs demand mandatory cloud network connections and expose sensitive engineering code to remote servers.</p>
-              <span class="badge-pill">Data Sovereignty</span>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Foundational Philosophy & Motivation</span>
-          <span>Slide 2 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 3: System Architecture & Data Flow -->
-      <section class="slide" data-slide="3">
-        <div class="slide-header">
-          <div class="slide-category">System Architecture</div>
-          <h2 class="slide-title">End-to-End System Pipeline</h2>
-          <p class="slide-subtitle">Modular reactive architecture connecting multimodal input channels, hybrid inference dispatchers, and hardware-accelerated rendering canvases.</p>
-        </div>
-        <div class="slide-body">
-          <div class="diagram-stage">
-            <div class="diagram-svg-container">
-              <svg viewBox="0 0 920 280" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#059669" />
-                    <stop offset="100%" stop-color="#0284c7" />
-                  </linearGradient>
-                  <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.04" />
-                  </filter>
-                </defs>
-
-                <!-- Layer 1: Input / Client Layer -->
-                <rect x="20" y="30" width="180" height="220" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#cardShadow)"/>
-                <text x="110" y="60" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="700" font-size="13" fill="#0f172a">MULTIMODAL INPUT</text>
-                
-                <rect x="35" y="80" width="150" height="36" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                <text x="110" y="102" text-anchor="middle" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#334155">Audio Speech (STT)</text>
-                
-                <rect x="35" y="125" width="150" height="36" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                <text x="110" y="147" text-anchor="middle" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#334155">PDF & Document Drop</text>
-                
-                <rect x="35" y="170" width="150" height="36" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                <text x="110" y="192" text-anchor="middle" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#334155">Webcam Video Stream</text>
-
-                <rect x="35" y="215" width="150" height="24" rx="6" fill="#ecfdf5" stroke="#a7f3d0"/>
-                <text x="110" y="231" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#059669">Native Desktop GUI</text>
-
-                <!-- Arrow 1 -> 2 -->
-                <path d="M 200 140 L 260 140" stroke="#059669" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
-                <polygon points="260,140 252,135 252,145" fill="#059669" />
-
-                <!-- Layer 2: Core Orchestration Engine -->
-                <rect x="265" y="30" width="260" height="220" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#cardShadow)"/>
-                <text x="395" y="60" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="700" font-size="13" fill="#0f172a">UNIFIED INFERENCE ENGINE</text>
-
-                <rect x="280" y="80" width="230" height="60" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
-                <text x="395" y="103" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="700" font-size="12" fill="#15803d">Google Gemini Cloud (API)</text>
-                <text x="395" y="122" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#166534">gemini-3.5-flash-lite (Cloud)</text>
-
-                <rect x="280" y="150" width="230" height="60" rx="10" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="1.5"/>
-                <text x="395" y="173" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="700" font-size="12" fill="#0369a1">Ollama Local Engine</text>
-                <text x="395" y="192" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#075985">localhost:11434 (100% Offline)</text>
-
-                <text x="395" y="235" text-anchor="middle" font-family="'Inter', sans-serif" font-size="10" font-weight="600" fill="#64748b">Zustand State & LocalStorage Store</text>
-
-                <!-- Arrow 2 -> 3 -->
-                <path d="M 525 140 L 585 140" stroke="#0284c7" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
-                <polygon points="585,140 577,135 577,145" fill="#0284c7" />
-
-                <!-- Layer 3: Presentation & Rendering Subsystems -->
-                <rect x="590" y="30" width="310" height="220" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#cardShadow)"/>
-                <text x="745" y="60" text-anchor="middle" font-family="'Outfit', sans-serif" font-weight="700" font-size="13" fill="#0f172a">REPRESENTATION STAGES</text>
-
-                <g transform="translate(605, 75)">
-                  <!-- Subsystem 1 -->
-                  <rect x="0" y="0" width="135" height="70" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                  <text x="67" y="24" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="700" font-size="11" fill="#0f172a">3D Avatar Scene</text>
-                  <text x="67" y="42" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748b">Viseme Morph Targets</text>
-                  <text x="67" y="56" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#059669">Three.js + R3F</text>
-
-                  <!-- Subsystem 2 -->
-                  <rect x="145" y="0" width="135" height="70" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                  <text x="212" y="24" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="700" font-size="11" fill="#0f172a">Smart Visualizer</text>
-                  <text x="212" y="42" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748b">2D Vector & 3D Spatial</text>
-                  <text x="212" y="56" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#0284c7">Mermaid + WebGL</text>
-
-                  <!-- Subsystem 3 -->
-                  <rect x="0" y="80" width="135" height="75" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                  <text x="67" y="104" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="700" font-size="11" fill="#0f172a">Slide Deck Studio</text>
-                  <text x="67" y="122" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748b">Presenter Co-Pilot</text>
-                  <text x="67" y="136" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#4f46e5">Reactive Markdown</text>
-
-                  <!-- Subsystem 4 -->
-                  <rect x="145" y="80" width="135" height="75" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                  <text x="212" y="104" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="700" font-size="11" fill="#0f172a">Assessment Quiz</text>
-                  <text x="212" y="122" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748b">PDF & Notes Ingestion</text>
-                  <text x="212" y="136" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#d97706">Auto-Score Engine</text>
-                </g>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Architectural Blueprint</span>
-          <span>Slide 3 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 4: Dual AI Backend Engine -->
-      <section class="slide" data-slide="4">
-        <div class="slide-header">
-          <div class="slide-category">Core Engine</div>
-          <h2 class="slide-title">Dual Inference System (Cloud + Offline)</h2>
-          <p class="slide-subtitle">A unified API abstraction layer routing requests based on connectivity, hardware acceleration, and privacy preference.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-2">
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-emerald-soft); border-color:var(--accent-emerald-border); color:var(--accent-emerald);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              </div>
-              <h3 class="card-title">Google Gemini Cloud (API)</h3>
-              <p class="card-desc">
-                High-throughput multimodal intelligence via Google GenAI SDK. Powered by <code>gemini-3.5-flash-lite</code> for sub-second responses and rich structured outputs.
-              </p>
-              <div style="background:var(--bg-card-subtle); padding:0.75rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.78rem; line-height:1.6; color:var(--text-secondary);">
-                • Full streaming token decoder via Web Streams API<br/>
-                • Automatic API key testing and fallback validation<br/>
-                • Generates complex Mermaid graphs and 3D Three.js scene code
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-cyan-soft); border-color:var(--accent-cyan-border); color:var(--accent-cyan);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-              </div>
-              <h3 class="card-title">Ollama Local AI (Zero Cloud)</h3>
-              <p class="card-desc">
-                Direct native HTTP streaming to <code>localhost:11434</code>. Download, pull, and run weights on user hardware with zero external dependencies.
-              </p>
-              <div style="background:var(--bg-card-subtle); padding:0.75rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.78rem; line-height:1.6; color:var(--text-secondary);">
-                • Live in-app model downloader with real-time percentage progress<br/>
-                • Supports Qwen 2.5 Coder, Llama 3.2, DeepSeek, and Mistral<br/>
-                • 100% offline data retention with zero tracking
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Inference Flexibility</span>
-          <span>Slide 4 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 5: 3D Avatar & Real-time Visemes -->
-      <section class="slide" data-slide="5">
-        <div class="slide-header">
-          <div class="slide-category">Embodied AI</div>
-          <h2 class="slide-title">Interactive 3D Avatar & Audio Lip-Sync</h2>
-          <p class="slide-subtitle">Hardware-accelerated 3D presence built with Three.js, React Three Fiber, and real-time audio viseme analysis.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-3">
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-              </div>
-              <h3 class="card-title">Real-Time Viseme Mapping</h3>
-              <p class="card-desc">
-                Transforms speech phonemes into blendshape mouth morph targets (A, E, I, O, U, and consonants) with smooth lerping interpolations.
-              </p>
-              <span class="badge-pill">Morph Targets</span>
-            </div>
-
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-              </div>
-              <h3 class="card-title">Avatar Customizer Studio</h3>
-              <p class="card-desc">
-                In-app studio modal to customize skin tone, hair color, eye glow, outfit shaders, and studio lighting rigs (Cyber, Clinical, Warm).
-              </p>
-              <span class="badge-pill">GLTF & MeshStandard</span>
-            </div>
-
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-              </div>
-              <h3 class="card-title">Acoustic Audio Tuning</h3>
-              <p class="card-desc">
-                Fine-tune voice pitch calibration, speech velocity rates, bass boost equalization, and preferred system voice engines.
-              </p>
-              <span class="badge-pill">Web Audio API</span>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Human-Computer Interaction</span>
-          <span>Slide 5 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 6: Visual Classroom & Smart Board -->
-      <section class="slide" data-slide="6">
-        <div class="slide-header">
-          <div class="slide-category">Visual Learning</div>
-          <h2 class="slide-title">Multi-Dimensional Smart Board (2D & 3D)</h2>
-          <p class="slide-subtitle">Converts abstract algorithmic instructions into live interactive diagrams and rotatable 3D coordinate spaces.</p>
-        </div>
-        <div class="slide-body">
-          <div class="split-layout">
-            <div class="split-text-col">
-              <div class="feature-row">
-                <div class="feature-icon-badge">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                </div>
-                <div>
-                  <h4 style="font-size:0.92rem; font-weight:700; color:var(--text-primary);">2D Vector & Mermaid Engine</h4>
-                  <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">Renders flowcharts, state transitions, XY bar charts, and sequence diagrams with 3000% zoom clarity and replay animation.</p>
-                </div>
-              </div>
-
-              <div class="feature-row">
-                <div class="feature-icon-badge" style="background:var(--accent-indigo-soft); border-color:var(--accent-indigo-border); color:var(--accent-indigo);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                </div>
-                <div>
-                  <h4 style="font-size:0.92rem; font-weight:700; color:var(--text-primary);">3D Spatial Engine & OrbitControls</h4>
-                  <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">Procedural Three.js runtime with 3-axis rotation, isometric perspectives, animated graph vertices, and parametric geometry support.</p>
-                </div>
-              </div>
-
-              <div class="feature-row">
-                <div class="feature-icon-badge" style="background:var(--accent-cyan-soft); border-color:var(--accent-cyan-border); color:var(--accent-cyan);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
-                </div>
-                <div>
-                  <h4 style="font-size:0.92rem; font-weight:700; color:var(--text-primary);">Hardware-Accelerated Split Screen</h4>
-                  <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">Draggable splitter dividing interactive blackboard, 3D educator model, and synchronized chat panel.</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Vector Diagram Illustration -->
-            <div class="diagram-stage" style="padding:1rem;">
-              <svg viewBox="0 0 440 240" xmlns="http://www.w3.org/2000/svg">
-                <rect width="440" height="240" rx="10" fill="#ffffff" stroke="#e2e8f0"/>
-                
-                <!-- Circuit / Graph Nodes -->
-                <circle cx="90" cy="70" r="28" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
-                <text x="90" y="74" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#059669">Root (A)</text>
-                
-                <line x1="115" y1="85" x2="195" y2="135" stroke="#059669" stroke-width="2"/>
-                
-                <circle cx="220" cy="150" r="28" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>
-                <text x="220" y="154" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#0284c7">Left (B)</text>
-                
-                <line x1="245" y1="165" x2="325" y2="195" stroke="#0284c7" stroke-width="2"/>
-
-                <circle cx="350" cy="200" r="24" fill="#fdf4ff" stroke="#a855f7" stroke-width="2"/>
-                <text x="350" y="204" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#7e22ce">Leaf (C)</text>
-
-                <!-- 3D Orbit Coordinate Box -->
-                <rect x="230" y="25" width="180" height="95" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
-                <text x="320" y="45" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" fill="#334155">3D Spatial Matrix (X, Y, Z)</text>
-                <line x1="260" y1="90" x2="380" y2="90" stroke="#94a3b8" stroke-width="1.5"/>
-                <line x1="320" y1="55" x2="320" y2="110" stroke="#94a3b8" stroke-width="1.5"/>
-                <circle cx="320" cy="90" r="4" fill="#059669"/>
-                <text x="330" y="85" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#059669">Origin (0,0,0)</text>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Smart Pedagogical Workspace</span>
-          <span>Slide 6 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 7: AI Slide Deck Studio (PPT Mode) -->
-      <section class="slide" data-slide="7">
-        <div class="slide-header">
-          <div class="slide-category">Presentation Tool</div>
-          <h2 class="slide-title">AI Slide Deck Studio</h2>
-          <p class="slide-subtitle">Generate dense, highly technical presentation decks with embedded architecture diagrams and speaker notes.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-2">
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-emerald-soft); border-color:var(--accent-emerald-border); color:var(--accent-emerald);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="14" x="3" y="3" rx="2"/><path d="M7 21h10"/><path d="M12 17v4"/><path d="m9 9 6 3-6 3Z"/></svg>
-              </div>
-              <h3 class="card-title">Automated Deck Synthesis</h3>
-              <p class="card-desc">
-                Input any research topic, code repo, or engineering concept to produce a tailored multi-slide technical presentation.
-              </p>
-              <div style="background:var(--bg-card-subtle); padding:0.75rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.78rem; line-height:1.6; color:var(--text-secondary);">
-                • Audience Profiling: Technical, Executive Briefing, or Academic<br/>
-                • Theme presets: Modern Minimal, Slate, Cyberpunk, Emerald<br/>
-                • Automatic extraction of key takeaways and complexity metrics
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-cyan-soft); border-color:var(--accent-cyan-border); color:var(--accent-cyan);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              </div>
-              <h3 class="card-title">Live Slide Co-Pilot & History</h3>
-              <p class="card-desc">
-                Embedded slide co-pilot for on-the-fly rewrites and contextual Q&A, fully integrated into chat history.
-              </p>
-              <div style="background:var(--bg-card-subtle); padding:0.75rem; border-radius:10px; border:1px solid var(--border-subtle); font-size:0.78rem; line-height:1.6; color:var(--text-secondary);">
-                • Fullscreen Presentation Mode with keyboard arrow navigation<br/>
-                • Automatic session saving with interactive launch cards<br/>
-                • One-click export to Markdown or PDF print format
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Generative Document Workflow</span>
-          <span>Slide 7 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 8: AI Assessment & PDF Quiz Mode -->
-      <section class="slide" data-slide="8">
-        <div class="slide-header">
-          <div class="slide-category">Evaluation Engine</div>
-          <h2 class="slide-title">AI Assessment & Document Quiz Mode</h2>
-          <p class="slide-subtitle">Formulates rigorous multiple-choice assessments from user topics or uploaded PDFs and source code.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-3">
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-amber-soft); border-color:var(--accent-amber-border); color:var(--accent-amber);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-              </div>
-              <h3 class="card-title">PDF & Document Ingestion</h3>
-              <p class="card-desc">
-                Parses PDF textbooks, lecture notes, CSVs, and source code files directly in the browser to extract key technical concepts.
-              </p>
-              <span class="badge-pill">Text & Code Ingestion</span>
-            </div>
-
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-amber-soft); border-color:var(--accent-amber-border); color:var(--accent-amber);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
-              </div>
-              <h3 class="card-title">Interactive Scoring Studio</h3>
-              <p class="card-desc">
-                Real-time question matrix navigation, dynamic audio read-aloud, instant scoring percentage, and detailed mechanical rationales.
-              </p>
-              <span class="badge-pill">Instant Feedback</span>
-            </div>
-
-            <div class="card">
-              <div class="card-icon" style="background:var(--accent-amber-soft); border-color:var(--accent-amber-border); color:var(--accent-amber);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-              </div>
-              <h3 class="card-title">Session History & Retesting</h3>
-              <p class="card-desc">
-                Completed and active quizzes are archived to user chat history with custom amber badges, retrievable for continuous revision.
-              </p>
-              <span class="badge-pill">Persistent Revision</span>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Autonomous Evaluation & Testing</span>
-          <span>Slide 8 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 9: Mock Interview & Practice Stage -->
-      <section class="slide" data-slide="9">
-        <div class="slide-header">
-          <div class="slide-category">Career Simulation</div>
-          <h2 class="slide-title">Interactive Mock Interviewer</h2>
-          <p class="slide-subtitle">High-fidelity technical video interview simulation with adaptive questions, voice transcription, and live candidate feedback.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-3">
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
-              </div>
-              <h3 class="card-title">Dual Video Call Stage</h3>
-              <p class="card-desc">
-                Side-by-side video interface presenting the AI Recruiter 3D avatar on one side and the user's active camera stream on the other.
-              </p>
-            </div>
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-              </div>
-              <h3 class="card-title">Role-Tailored Prompts</h3>
-              <p class="card-desc">
-                Input any job title and specification (e.g. Distributed Systems Engineer, Product Architect) to generate rigorous technical questions.
-              </p>
-            </div>
-            <div class="card">
-              <div class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              </div>
-              <h3 class="card-title">Live Transcript & Scorecard</h3>
-              <p class="card-desc">
-                Synchronized live conversation log assessing communication clarity, architectural depth, and algorithmic correctness.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Career Readiness & Evaluation</span>
-          <span>Slide 9 of 10</span>
-        </div>
-      </section>
-
-      <!-- SLIDE 10: Technical Stack & Conclusion -->
-      <section class="slide" data-slide="10">
-        <div class="slide-header">
-          <div class="slide-category">Project Defense</div>
-          <h2 class="slide-title">Technology Stack & Defense Summary</h2>
-          <p class="slide-subtitle">Built on modern, production-grade engineering standards for native desktop responsiveness and fluid 60 FPS graphics.</p>
-        </div>
-        <div class="slide-body">
-          <div class="grid-4" style="margin-bottom:1.25rem;">
-            <div class="card" style="padding:1rem;">
-              <div class="card-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
-              </div>
-              <h3 class="card-title" style="font-size:0.95rem;">Frontend GUI</h3>
-              <p class="card-desc" style="font-size:0.78rem;">React 19, Vite 8, Tailwind CSS v4, Lucide vector icons, and reactive split-stage layout.</p>
-            </div>
-
-            <div class="card" style="padding:1rem;">
-              <div class="card-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-              </div>
-              <h3 class="card-title" style="font-size:0.95rem;">3D Graphics</h3>
-              <p class="card-desc" style="font-size:0.78rem;">Three.js, React Three Fiber, OrbitControls, Viseme morph targets, and ParametricGeometry.</p>
-            </div>
-
-            <div class="card" style="padding:1rem;">
-              <div class="card-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              </div>
-              <h3 class="card-title" style="font-size:0.95rem;">Dual Inference</h3>
-              <p class="card-desc" style="font-size:0.78rem;">Google Gemini SDK + local Ollama HTTP streams for hybrid cloud and offline autonomy.</p>
-            </div>
-
-            <div class="card" style="padding:1rem;">
-              <div class="card-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
-              </div>
-              <h3 class="card-title" style="font-size:0.95rem;">State & Memory</h3>
-              <p class="card-desc" style="font-size:0.78rem;">Zustand state store with persistent session serialization and localStorage caches.</p>
-            </div>
-          </div>
-
-          <!-- Final Defense Takeaway -->
-          <div style="background:var(--accent-emerald-soft); border:1px solid var(--accent-emerald-border); border-radius:14px; padding:0.9rem 1.25rem; display:flex; align-items:center; gap:0.75rem; width:100%;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            <span style="font-size:0.85rem; color:#065f46; font-weight:600;">
-              Tyloop AI demonstrates that combining spatial 3D visualization, interactive multimodal tutoring, and dual-backend autonomy creates a significantly more effective learning platform than conventional text-based AI.
-            </span>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Project Defense Conclusion</span>
-          <span>Slide 10 of 10</span>
-        </div>
-      </section>
-
     </div>
   </main>
 
-  <!-- Presentation Footer & Key Controls -->
+  <!-- Presentation Footer & Hints -->
   <footer class="presentation-footer">
     <div class="key-hints">
       <span>Navigate: <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd></span>
+      <span>Notes: <kbd>N</kbd></span>
       <span>Fullscreen: <kbd>F</kbd></span>
+      <span>Slides: <kbd>S</kbd></span>
     </div>
-    <div>Tyloop AI — Autonomous Multimodal Desktop Platform</div>
+    <div>Tyloop AI — Interactive Learning Platform</div>
   </footer>
 
+  <!-- Speaker Talking Points Drawer (N Key) -->
+  <div class="notes-drawer" id="notesDrawer">
+    <div class="notes-header">
+      <div class="notes-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Presenter Talking Points for Evaluation</span>
+      </div>
+      <button class="nav-btn btn-icon-only" onclick="toggleSpeakerNotes()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="notes-content" id="notesContent">
+      Loading presenter talking points...
+    </div>
+  </div>
+
+  <!-- Slide Sorter Modal (S Key) -->
+  <div class="sorter-overlay" id="sorterOverlay" onclick="closeSorterOnBackdrop(event)">
+    <div class="sorter-modal">
+      <div class="notes-header" style="margin-bottom:1rem;">
+        <div class="notes-title" style="font-size:1.1rem; color:var(--text-primary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          <span>Slide Sorter (All 12 Slides)</span>
+        </div>
+        <button class="nav-btn btn-icon-only" onclick="toggleSlideSorter()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sorter-grid" id="sorterGrid">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ==========================================
+    // Slide Navigation & State
+    // ==========================================
     let currentSlideIndex = 1;
-    const totalSlides = 10;
+    const totalSlides = 12;
 
     const slides = document.querySelectorAll('.slide');
     const slideIndicator = document.getElementById('slideIndicator');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const progressBar = document.getElementById('progressBar');
+    const notesDrawer = document.getElementById('notesDrawer');
+    const notesContent = document.getElementById('notesContent');
+    const sorterOverlay = document.getElementById('sorterOverlay');
+    const sorterGrid = document.getElementById('sorterGrid');
+
+    const slideMetadata = [
+      { id: 1, title: "Title & Project Overview" },
+      { id: 2, title: "Why Traditional AI Falls Short" },
+      { id: 3, title: "How Tyloop AI Works in 3 Steps" },
+      { id: 4, title: "Feature 1: Dual AI (Cloud + Offline)" },
+      { id: 5, title: "Feature 2: 3D Digital Teacher Avatar" },
+      { id: 6, title: "Feature 3: 2D & 3D Smart Blackboard" },
+      { id: 7, title: "Feature 4: AI Presentation Creator" },
+      { id: 8, title: "Feature 5: PDF Book & Practice Quizzes" },
+      { id: 9, title: "Feature 6: Mock Job Interview Practice" },
+      { id: 10, title: "System Reliability & Speed" },
+      { id: 11, title: "Summary of Key Project Benefits" },
+      { id: 12, title: "Conclusion & Q&A Readiness" }
+    ];
+
+    function populateSorter() {
+      sorterGrid.innerHTML = '';
+      slideMetadata.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = `sorter-thumb ${item.id === currentSlideIndex ? 'active' : ''}`;
+        div.onclick = () => {
+          goToSlide(item.id);
+          toggleSlideSorter();
+        };
+        div.innerHTML = `
+          <div class="sorter-thumb-num">SLIDE ${String(item.id).padStart(2, '0')}</div>
+          <div class="sorter-thumb-title">${item.title}</div>
+        `;
+        sorterGrid.appendChild(div);
+      });
+    }
 
     function updateDeck() {
       slides.forEach((slide) => {
@@ -1173,16 +1561,22 @@
         slide.classList.toggle('active', slideNum === currentSlideIndex);
       });
 
-      // Update counter
       slideIndicator.textContent = `${String(currentSlideIndex).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`;
 
-      // Update button states
       prevBtn.disabled = currentSlideIndex === 1;
       nextBtn.disabled = currentSlideIndex === totalSlides;
 
-      // Update progress bar
       const progressPercent = (currentSlideIndex / totalSlides) * 100;
       progressBar.style.width = `${progressPercent}%`;
+
+      const activeSlide = document.querySelector(`.slide[data-slide="${currentSlideIndex}"]`);
+      if (activeSlide && activeSlide.getAttribute('data-notes')) {
+        notesContent.textContent = activeSlide.getAttribute('data-notes');
+      } else {
+        notesContent.textContent = "No specific talking points provided for this slide.";
+      }
+
+      populateSorter();
     }
 
     function nextSlide() {
@@ -1199,8 +1593,50 @@
       }
     }
 
-    // Keyboard navigation
+    function goToSlide(num) {
+      if (num >= 1 && num <= totalSlides) {
+        currentSlideIndex = num;
+        updateDeck();
+      }
+    }
+
+    function toggleSpeakerNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+
+    function toggleSlideSorter() {
+      sorterOverlay.classList.toggle('open');
+    }
+
+    function closeSorterOnBackdrop(e) {
+      if (e.target === sorterOverlay) {
+        sorterOverlay.classList.remove('open');
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+    }
+
+    function exportPdf() {
+      window.print();
+    }
+
+    // Keyboard controls
     window.addEventListener('keydown', (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
         if (currentSlideIndex < totalSlides) {
           e.preventDefault();
@@ -1212,11 +1648,17 @@
           prevSlide();
         }
       } else if (e.key.toLowerCase() === 'f') {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-          document.exitFullscreen().catch(() => {});
-        }
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        toggleSpeakerNotes();
+      } else if (e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        toggleSlideSorter();
+      } else if (e.key === 'Escape') {
+        sorterOverlay.classList.remove('open');
+        notesDrawer.classList.remove('open');
       }
     });
 
@@ -1224,7 +1666,7 @@
     let touchStartX = 0;
     window.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
-    });
+    }, { passive: true });
 
     window.addEventListener('touchend', (e) => {
       const touchEndX = e.changedTouches[0].screenX;
@@ -1233,9 +1675,247 @@
       } else if (touchEndX - touchStartX > 50) {
         prevSlide();
       }
-    });
+    }, { passive: true });
 
-    // Initial setup
+    // ==========================================================
+    // NATIVE POWERPOINT (.PPTX) DOWNLOAD GENERATOR
+    // Uses PptxGenJS to synthesize an authentic PowerPoint file
+    // ==========================================================
+    function downloadPptx() {
+      const btn = document.getElementById('pptxDownloadBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<span>Synthesizing PPTX...</span>`;
+      btn.disabled = true;
+
+      try {
+        if (typeof PptxGenJS === 'undefined') {
+          alert('PowerPoint generator library is loading. Please try again in 2 seconds.');
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          return;
+        }
+
+        const pres = new PptxGenJS();
+        pres.layout = 'LAYOUT_16x9';
+        pres.title = 'Tyloop AI Project Defense Presentation';
+        pres.author = 'Tyloop Engineering Team';
+
+        const C_DARK_BG = '09090B';
+        const C_CARD_BG = '18181B';
+        const C_EMERALD = '10B981';
+        const C_CYAN = '06B6D4';
+        const C_TEXT_PRIMARY = 'FAFAFA';
+        const C_TEXT_MUTED = 'A1A1AA';
+        const C_BORDER = '27272A';
+
+        function addHeader(slide, cat, title, sub) {
+          slide.background = { color: C_DARK_BG };
+          slide.addText(cat.toUpperCase(), { x: 0.8, y: 0.5, w: 8.0, h: 0.3, fontSize: 10, fontFace: 'Arial', bold: true, color: C_EMERALD });
+          slide.addText(title, { x: 0.8, y: 0.8, w: 11.5, h: 0.7, fontSize: 24, fontFace: 'Arial', bold: true, color: C_TEXT_PRIMARY });
+          slide.addText(sub, { x: 0.8, y: 1.5, w: 11.5, h: 0.5, fontSize: 12, fontFace: 'Arial', color: C_TEXT_MUTED });
+          slide.addText('Tyloop AI — Project Defense Presentation', { x: 0.8, y: 7.0, w: 8.0, h: 0.3, fontSize: 9, fontFace: 'Arial', color: '52525B' });
+        }
+
+        // Slide 1: Title
+        const s1 = pres.addSlide();
+        s1.background = { color: C_DARK_BG };
+        s1.addText('FINAL YEAR ENGINEERING CAPSTONE DEFENSE', { x: 1.0, y: 1.5, w: 11.0, h: 0.4, fontSize: 12, bold: true, color: C_EMERALD, align: 'center', fontFace: 'Arial' });
+        s1.addText('Tyloop AI', { x: 1.0, y: 2.1, w: 11.0, h: 1.2, fontSize: 48, bold: true, color: C_TEXT_PRIMARY, align: 'center', fontFace: 'Arial' });
+        s1.addText('Interactive Desktop AI Workstation & Learning Platform', { x: 1.5, y: 3.4, w: 10.3, h: 0.7, fontSize: 18, color: C_CYAN, align: 'center', fontFace: 'Arial' });
+        s1.addText('An intelligent desktop platform that helps students understand complex subjects through a 3D digital teacher, visual diagrams, automated presentation creation, interactive textbook quizzes, and mock job interviews.', { x: 2.0, y: 4.3, w: 9.3, h: 1.0, fontSize: 13, color: C_TEXT_MUTED, align: 'center', fontFace: 'Arial' });
+        s1.addNotes('Good morning/afternoon professors. Our project is Tyloop AI — an interactive learning platform designed to help students learn difficult subjects. Instead of just reading text, students learn by talking to a 3D digital teacher, looking at automatic visual diagrams, taking self-assessment quizzes, and practicing job interviews.');
+
+        // Slide 2: Problem
+        const s2 = pres.addSlide();
+        addHeader(s2, 'Problem & Motivation', 'Why Traditional AI Tools Fall Short for Students', 'Standard AI chatbots rely entirely on long walls of text. Students learn much better when they can see visual diagrams, hear explanations, and practice interactively.');
+        const s2Cards = [
+          { t: '1. Text Overload', d: 'Reading long paragraphs of text makes complex engineering concepts hard to visualize and mentally exhausting for students to follow.' },
+          { t: '2. Lack of Human Touch', d: 'Plain chat boxes feel cold and distant. Having a digital teacher that speaks and gestures makes learning much more engaging and natural.' },
+          { t: '3. Internet & Privacy Risks', d: 'Most online AI tools stop working without Wi-Fi and require uploading private university study documents to public servers.' }
+        ];
+        s2Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 3.9);
+          s2.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 3.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s2.addText(c.t, { x: x + 0.2, y: 2.5, w: 3.2, h: 0.5, fontSize: 14, bold: true, color: C_TEXT_PRIMARY, fontFace: 'Arial' });
+          s2.addText(c.d, { x: x + 0.2, y: 3.1, w: 3.2, h: 3.2, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s2.addNotes('Professors, why did we build this? Current AI tools like ChatGPT only give long paragraphs of text. When students read plain text walls, they quickly get tired and find it hard to visualize complex ideas. Also, current tools stop working without internet. Tyloop AI solves these problems by providing visual diagrams, voice interaction, and offline privacy.');
+
+        // Slide 3: How it Works
+        const s3 = pres.addSlide();
+        addHeader(s3, 'System Overview', 'How Tyloop AI Works in 3 Simple Steps', 'A straightforward learning pipeline that turns student questions into spoken lessons, visual blackboards, and interactive practice tests.');
+        const s3Steps = [
+          { t: 'Step 1: Student Input', d: 'Students can speak into their microphone, upload PDF textbook notes, or type questions.' },
+          { t: 'Step 2: Smart AI Processing Engine', d: 'Processes questions using fast cloud AI or 100% private offline AI that runs right on the laptop.' },
+          { t: 'Step 3: Visual & Spoken Lessons', d: 'The 3D teacher speaks the explanation out loud, the blackboard draws diagrams, and quizzes test learning.' }
+        ];
+        s3Steps.forEach((st, i) => {
+          const y = 2.3 + (i * 1.5);
+          s3.addShape(pres.ShapeType.roundRect, { x: 0.8, y: y, w: 11.7, h: 1.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s3.addText(st.t, { x: 1.1, y: y + 0.15, w: 11.0, h: 0.4, fontSize: 14, bold: true, color: C_EMERALD, fontFace: 'Arial' });
+          s3.addText(st.d, { x: 1.1, y: y + 0.55, w: 11.0, h: 0.5, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s3.addNotes('Here is how the system works in 3 simple steps: 1) Student asks a question. 2) Smart engine processes the question. 3) System outputs spoken voice, visual diagrams, and quizzes.');
+
+        // Slide 4: Dual AI
+        const s4 = pres.addSlide();
+        addHeader(s4, 'Core Feature 1', 'Smart Dual AI Engine: Cloud Speed + Offline Privacy', 'Students can seamlessly switch between high-speed cloud intelligence and 100% private offline AI depending on their needs.');
+        s4.addShape(pres.ShapeType.roundRect, { x: 0.8, y: 2.3, w: 5.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_EMERALD, width: 1 } });
+        s4.addText('Cloud Mode (Fast & Powerful)', { x: 1.1, y: 2.5, w: 5.0, h: 0.4, fontSize: 15, bold: true, color: C_EMERALD, fontFace: 'Arial' });
+        s4.addText('Uses Google Gemini Cloud AI for instant answers, detailed presentation creation, and complex problem solving when internet is connected.\n\n• Sub-second response speed\n• Ideal for generating full presentation decks\n• Automatic connection status check', { x: 1.1, y: 3.1, w: 5.0, h: 3.2, fontSize: 11, color: C_TEXT_PRIMARY, fontFace: 'Arial' });
+
+        s4.addShape(pres.ShapeType.roundRect, { x: 6.9, y: 2.3, w: 5.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_CYAN, width: 1 } });
+        s4.addText('Offline Mode (100% Private)', { x: 7.2, y: 2.5, w: 5.0, h: 0.4, fontSize: 15, bold: true, color: C_CYAN, fontFace: 'Arial' });
+        s4.addText('Runs directly on the user laptop using Ollama. Requires zero internet connection, protecting student privacy and confidential documents.\n\n• Works anywhere without Wi-Fi\n• Zero monthly subscription fees\n• Complete student data privacy', { x: 7.2, y: 3.1, w: 5.0, h: 3.2, fontSize: 11, color: C_TEXT_PRIMARY, fontFace: 'Arial' });
+        s4.addNotes('Feature 1 is our Smart Dual AI Engine. Students can choose Cloud Mode for speed or Offline Mode for complete privacy without internet.');
+
+        // Slide 5: Avatar
+        const s5 = pres.addSlide();
+        addHeader(s5, 'Core Feature 2', 'Interactive 3D Digital Teacher & Voice Lessons', 'A friendly digital teacher that speaks out loud, matches lip movements to spoken words, and provides realistic classroom presence.');
+        const s5Cards = [
+          { t: 'Realistic Speech Lip-Sync', d: 'Mouth movements automatically synchronize with spoken lesson words in real time, making explanations natural and easy to follow.' },
+          { t: 'Life-Like Micro-Animations', d: 'Features ambient breathing, natural eye blinking, and friendly head gestures to keep students focused and engaged.' },
+          { t: 'Avatar Customization Studio', d: 'Students can customize skin tone, clothing style, hair colors, and classroom lighting presets (Studio Light, Warm Amber, Cyber Glow).' }
+        ];
+        s5Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 3.9);
+          s5.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 3.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s5.addText(c.t, { x: x + 0.2, y: 2.5, w: 3.2, h: 0.4, fontSize: 13, bold: true, color: C_EMERALD, fontFace: 'Arial' });
+          s5.addText(c.d, { x: x + 0.2, y: 3.1, w: 3.2, h: 3.2, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s5.addNotes('Feature 2 is our 3D Digital Teacher. The avatar speaks out loud, blinks, breathes, and matches mouth movements to voice sound.');
+
+        // Slide 6: Smart Board
+        const s6 = pres.addSlide();
+        addHeader(s6, 'Core Feature 3', 'Multi-Dimensional Smart Board: 2D & 3D Visuals', 'Automatically converts abstract concepts into colorful 2D flowcharts and rotatable 3D spatial models that students can explore.');
+        const s6Cards = [
+          { t: '2D Vector Flowcharts', d: 'Automatically draws process flowcharts, organizational diagrams, sequence charts, and mathematical formulas as the lesson progresses.' },
+          { t: '3D Interactive Models', d: 'Renders rotatable 3D models of science concepts, molecules, planetary systems, and geometry that students can spin 360 degrees.' },
+          { t: 'Split-Screen Classroom', d: 'A flexible split screen allows students to concurrently view the 3D teacher, visual blackboard, and chat text history.' }
+        ];
+        s6Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 3.9);
+          s6.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 3.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s6.addText(c.t, { x: x + 0.2, y: 2.5, w: 3.2, h: 0.4, fontSize: 13, bold: true, color: C_CYAN, fontFace: 'Arial' });
+          s6.addText(c.d, { x: x + 0.2, y: 3.1, w: 3.2, h: 3.2, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s6.addNotes('Feature 3 is our Visual Smart Blackboard. Automatically draws 2D flowcharts and rotatable 3D models.');
+
+        // Slide 7: Slide Studio
+        const s7 = pres.addSlide();
+        addHeader(s7, 'Core Feature 4', 'AI Presentation Creator & One-Click PPT Download', 'Instantly generates structured presentation decks from any study topic or document, with direct export to Microsoft PowerPoint.');
+        s7.addShape(pres.ShapeType.roundRect, { x: 0.8, y: 2.3, w: 5.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+        s7.addText('Automatic Slide Generation', { x: 1.1, y: 2.5, w: 5.0, h: 0.4, fontSize: 14, bold: true, color: C_EMERALD, fontFace: 'Arial' });
+        s7.addText('• Turns any subject or notes into multi-slide presentations\n• Includes structured titles, bullet points, and key takeaways\n• Audience presets: Academic Seminar, General, Executive\n• Fullscreen presentation mode with keyboard navigation', { x: 1.1, y: 3.1, w: 5.0, h: 3.2, fontSize: 11, color: C_TEXT_PRIMARY, fontFace: 'Arial' });
+
+        s7.addShape(pres.ShapeType.roundRect, { x: 6.9, y: 2.3, w: 5.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+        s7.addText('One-Click PowerPoint (.pptx) Download', { x: 7.2, y: 2.5, w: 5.0, h: 0.4, fontSize: 14, bold: true, color: C_CYAN, fontFace: 'Arial' });
+        s7.addText('• Direct export into fully editable Microsoft PowerPoint files (.pptx)\n• Standard 16:9 widescreen format\n• Includes embedded presenter talking points for viva defense\n• Integrated slide co-pilot for on-the-fly revisions', { x: 7.2, y: 3.1, w: 5.0, h: 3.2, fontSize: 11, color: C_TEXT_PRIMARY, fontFace: 'Arial' });
+        s7.addNotes('Feature 4 is our AI Presentation Creator. Automatically creates multi-slide presentation decks with direct PowerPoint export.');
+
+        // Slide 8: PDF Quiz
+        const s8 = pres.addSlide();
+        addHeader(s8, 'Core Feature 5', 'PDF Textbook Ingestion & Interactive Quiz Mode', 'Upload any textbook chapter or study notes to automatically formulate practice tests, instant scoring, and detailed explanations.');
+        const s8Cards = [
+          { t: 'Easy Drag & Drop', d: 'Drag and drop PDF textbooks, study guides, or lecture notes directly into the application.' },
+          { t: 'Smart Multiple-Choice Quizzes', d: 'Formulates realistic multiple-choice questions with challenging options to thoroughly test student understanding.' },
+          { t: 'Instant Scoring & Explanations', d: 'Provides immediate grading percentages, voice readouts, and clear explanations for why each answer is right or wrong.' }
+        ];
+        s8Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 3.9);
+          s8.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 3.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s8.addText(c.t, { x: x + 0.2, y: 2.5, w: 3.2, h: 0.4, fontSize: 13, bold: true, color: 'F59E0B', fontFace: 'Arial' });
+          s8.addText(c.d, { x: x + 0.2, y: 3.1, w: 3.2, h: 3.2, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s8.addNotes('Feature 5 is our PDF Quiz Generator. Upload textbook PDFs to generate practice tests with instant scoring and explanations.');
+
+        // Slide 9: Mock Interview
+        const s9 = pres.addSlide();
+        addHeader(s9, 'Core Feature 6', 'Interactive Mock Technical Job Interviewer', 'A realistic video interview simulator that helps students practice oral answers, build confidence, and receive placement feedback.');
+        const s9Cards = [
+          { t: 'Dual Video Call View', d: 'Split-screen stage placing the 3D AI Recruiter avatar next to the student live laptop webcam stream.' },
+          { t: 'Role-Tailored Questions', d: 'Input any job title or industry (Engineering, Science, Business) to generate relevant interview questions.' },
+          { t: 'Placement Feedback Scorecard', d: 'Provides a clear candidate report evaluating answer clarity, technical depth, confidence, and areas to improve.' }
+        ];
+        s9Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 3.9);
+          s9.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 3.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s9.addText(c.t, { x: x + 0.2, y: 2.5, w: 3.2, h: 0.4, fontSize: 13, bold: true, color: 'F43F5E', fontFace: 'Arial' });
+          s9.addText(c.d, { x: x + 0.2, y: 3.1, w: 3.2, h: 3.2, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s9.addNotes('Feature 6 is our Mock Job Interviewer. Helps students prepare for campus placements with split-screen video call simulations.');
+
+        // Slide 10: Technical Design
+        const s10 = pres.addSlide();
+        addHeader(s10, 'System Design', 'Built for Speed, Security & Everyday Laptops', 'Engineered to run reliably as a native desktop application with automatic progress saving and low computer resource usage.');
+        const s10Cards = [
+          { t: 'Native Desktop Application', d: 'Packaged as a native desktop application (using Electron) that works smoothly across Windows, macOS, and Linux laptops.' },
+          { t: 'Automatic Progress Saving', d: 'Lessons, study notes, quiz scores, and customized settings are saved automatically on the laptop so students never lose progress.' },
+          { t: 'Smooth 60 FPS Visuals', d: 'Optimized 3D graphics and responsive interfaces ensure fluid visual animations without slowing down student laptops.' }
+        ];
+        s10Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 3.9);
+          s10.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 3.6, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s10.addText(c.t, { x: x + 0.2, y: 2.5, w: 3.2, h: 0.4, fontSize: 13, bold: true, color: '6366F1', fontFace: 'Arial' });
+          s10.addText(c.d, { x: x + 0.2, y: 3.1, w: 3.2, h: 3.2, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s10.addNotes('System reliability: Tyloop AI runs as a native desktop app, saving progress automatically and running smoothly on standard student laptops.');
+
+        // Slide 11: Benefits Summary
+        const s11 = pres.addSlide();
+        addHeader(s11, 'Evaluation Summary', 'Summary of Key Project Benefits', 'Why Tyloop AI represents a significant step forward in modern visual education platforms.');
+        const s11Cards = [
+          { t: 'Better Understanding', d: 'Visual diagrams and spoken lessons help students grasp complex topics much faster than reading text walls.' },
+          { t: '100% Privacy & Offline', d: 'Offline mode protects student study materials and allows continuous learning anywhere without internet access.' },
+          { t: 'All-in-One Solution', d: 'Combines visual teaching, presentation creation, PDF quiz testing, and interview simulation in a single application.' },
+          { t: 'Career Preparedness', d: 'Interactive practice quizzes and video job interview simulations prepare students for academic and career success.' }
+        ];
+        s11Cards.forEach((c, i) => {
+          const x = 0.8 + (i * 2.9);
+          s11.addShape(pres.ShapeType.roundRect, { x: x, y: 2.3, w: 2.7, h: 4.2, fill: { color: C_CARD_BG }, line: { color: C_BORDER, width: 1 } });
+          s11.addText(c.t, { x: x + 0.15, y: 2.5, w: 2.4, h: 0.4, fontSize: 12, bold: true, color: C_EMERALD, fontFace: 'Arial' });
+          s11.addText(c.d, { x: x + 0.15, y: 3.0, w: 2.4, h: 3.3, fontSize: 10, color: C_TEXT_MUTED, fontFace: 'Arial' });
+        });
+        s11.addNotes('Summary of core benefits: 1) Better learning through visuals. 2) Complete privacy & offline capability. 3) All-in-one platform.');
+
+        // Slide 12: Conclusion
+        const s12 = pres.addSlide();
+        addHeader(s12, 'Project Conclusion', 'Conclusion & Live Demonstration Readiness', 'Summary of project achievements and readiness for evaluator questions and live system demo.');
+        s12.addShape(pres.ShapeType.roundRect, { x: 0.8, y: 2.3, w: 5.6, h: 3.3, fill: { color: C_CARD_BG }, line: { color: C_EMERALD, width: 1 } });
+        s12.addText('Innovative Learning Platform', { x: 1.0, y: 2.5, w: 5.0, h: 0.4, fontSize: 14, bold: true, color: C_EMERALD, fontFace: 'Arial' });
+        s12.addText('Proves that uniting visual blackboards, spoken voice lessons, and 3D digital teachers creates a significantly more effective learning experience than static text chatbots.', { x: 1.0, y: 3.0, w: 5.0, h: 2.4, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+
+        s12.addShape(pres.ShapeType.roundRect, { x: 6.9, y: 2.3, w: 5.6, h: 3.3, fill: { color: C_CARD_BG }, line: { color: C_CYAN, width: 1 } });
+        s12.addText('Complete Student Toolset', { x: 7.1, y: 2.5, w: 5.0, h: 0.4, fontSize: 14, bold: true, color: C_CYAN, fontFace: 'Arial' });
+        s12.addText('Successfully combines lesson teaching, presentation generation, PDF textbook testing, and job interview practice into one easy-to-use desktop application.', { x: 7.1, y: 3.0, w: 5.0, h: 2.4, fontSize: 11, color: C_TEXT_MUTED, fontFace: 'Arial' });
+
+        s12.addShape(pres.ShapeType.roundRect, { x: 0.8, y: 5.8, w: 11.7, h: 0.9, fill: { color: '065F46' }, line: { color: C_EMERALD, width: 1 } });
+        s12.addText('Thank You Evaluators! Project Defense is Ready for Live Demonstration & Questions.', { x: 1.1, y: 5.9, w: 11.1, h: 0.4, fontSize: 13, bold: true, color: '#FFFFFF', fontFace: 'Arial' });
+        s12.addText('The application is fully operational on this workstation. We welcome your evaluation questions and live feature demonstration.', { x: 1.1, y: 6.3, w: 11.1, h: 0.35, fontSize: 10.5, color: '#D1FAE5', fontFace: 'Arial' });
+
+        s12.addNotes('Thank you, respected professors and evaluators. Tyloop AI is fully built, operational, and ready for a live demonstration. We welcome your questions.');
+
+        pres.writeFile({ fileName: 'Tyloop_AI_Presentation.pptx' })
+          .then(() => {
+            btn.innerHTML = `<span>Downloaded!</span>`;
+            setTimeout(() => {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+            }, 3000);
+          })
+          .catch((err) => {
+            alert('Error generating PPTX: ' + err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          });
+
+      } catch (err) {
+        alert('Error synthesizing PPTX: ' + err.message);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
     updateDeck();
   </script>
 </body>
